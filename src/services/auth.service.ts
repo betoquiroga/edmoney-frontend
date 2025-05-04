@@ -25,9 +25,10 @@ export class AuthService {
   public async register(createUserDto: CreateUserDto): Promise<AuthResponse> {
     const response = await this.apiService.post<AuthResponse>('/auth/register', createUserDto);
     
-    // Store token in localStorage if registration is successful
+    // Store token and user data in localStorage if registration is successful
     if (response.data.token) {
       localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
     }
     
     return response.data;
@@ -40,9 +41,10 @@ export class AuthService {
   public async login(loginDto: LoginDto): Promise<AuthResponse> {
     const response = await this.apiService.post<AuthResponse>('/auth/login', loginDto);
     
-    // Store token in localStorage if login is successful
+    // Store token and user data in localStorage if login is successful
     if (response.data.token) {
       localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
     }
     
     return response.data;
@@ -52,8 +54,9 @@ export class AuthService {
    * Logout the current user
    */
   public logout(): void {
-    // Remove token from localStorage
+    // Remove token and user data from localStorage
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     
     // Redirect to login page
     if (typeof window !== 'undefined') {
