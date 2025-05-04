@@ -10,7 +10,7 @@ export interface ButtonProps {
   onClick?: () => void;
 }
 
-const Button: React.FC<ButtonProps> = ({
+const Button = ({
   children,
   type = 'button',
   variant = 'primary',
@@ -18,7 +18,7 @@ const Button: React.FC<ButtonProps> = ({
   fullWidth = false,
   disabled = false,
   onClick,
-}) => {
+}: ButtonProps) => {
   const baseClasses = 'px-4 py-2 rounded-md font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
   
   const variantClasses = {

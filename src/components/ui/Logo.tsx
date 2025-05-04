@@ -6,11 +6,11 @@ interface LogoProps {
   className?: string;
 }
 
-const Logo: React.FC<LogoProps> = ({ 
+const Logo = ({ 
   size = 'medium',
   withLink = true,
   className = '' 
-}) => {
+}: LogoProps) => {
   const sizeClasses = {
     small: 'text-xl',
     medium: 'text-2xl',
@@ -19,7 +19,7 @@ const Logo: React.FC<LogoProps> = ({
 
   const logoContent = (
     <span className={`font-bold ${sizeClasses[size]} text-blue-600 ${className}`}>
-      FinTrack
+      EDmoney
     </span>
   );
 

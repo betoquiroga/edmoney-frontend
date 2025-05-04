@@ -1,22 +1,22 @@
-'use client';
+"use client"
 
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
-import Card from '@/components/ui/Card';
-import Logo from '@/components/ui/Logo';
-import RegisterForm from '@/components/auth/RegisterForm';
-import { authService } from '@/services/auth.service';
+import Card from "@/components/ui/Card"
+import Logo from "@/components/ui/Logo"
+import RegisterForm from "@/components/auth/RegisterForm"
+import { authService } from "@/services/auth.service"
 
 export default function RegisterPage() {
-  const router = useRouter();
+  const router = useRouter()
 
   // Redirect if already authenticated
   useEffect(() => {
     if (authService.isAuthenticated()) {
-      router.push('/dashboard');
+      router.push("/dashboard")
     }
-  }, [router]);
+  }, [router])
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -30,22 +30,22 @@ export default function RegisterPage() {
             Comienza a gestionar tus finanzas personales
           </p>
         </div>
-        
+
         <Card>
           <RegisterForm />
         </Card>
-        
+
         <p className="text-center text-sm text-gray-500 mt-8">
-          Al registrarte, aceptas nuestros{' '}
+          Al registrarte, aceptas nuestros{" "}
           <a href="#" className="text-blue-600 hover:text-blue-800">
             Términos de servicio
-          </a>{' '}
-          y{' '}
+          </a>{" "}
+          y{" "}
           <a href="#" className="text-blue-600 hover:text-blue-800">
             Política de privacidad
           </a>
         </p>
       </div>
     </div>
-  );
-} 
+  )
+}
