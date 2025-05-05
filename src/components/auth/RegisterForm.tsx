@@ -15,7 +15,7 @@ import { authService } from "@/services/auth.service"
 import { CreateUserDto } from "@/types/user.types"
 
 import Input from "../ui/Input"
-import Button from "../ui/Button"
+import { Button } from "../ui/Button"
 
 interface ApiError {
   message: string
@@ -103,12 +103,7 @@ export default function RegisterForm() {
         placeholder="******"
       />
 
-      <Button
-        type="submit"
-        variant="primary"
-        fullWidth
-        disabled={isSubmitting || registerMutation.isPending}
-      >
+      <Button variant="primary">
         {isSubmitting || registerMutation.isPending
           ? "Registrando..."
           : "Registrarse"}

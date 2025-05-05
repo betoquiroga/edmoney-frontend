@@ -12,7 +12,7 @@ import { authService } from "@/services/auth.service"
 import { LoginDto } from "@/types/auth.types"
 
 import Input from "../ui/Input"
-import Button from "../ui/Button"
+import { Button } from "../ui/Button"
 
 interface ApiError {
   message: string
@@ -85,12 +85,7 @@ export default function LoginForm() {
         </Link>
       </div>
 
-      <Button
-        type="submit"
-        variant="primary"
-        fullWidth
-        disabled={isSubmitting || loginMutation.isPending}
-      >
+      <Button variant="primary">
         {isSubmitting || loginMutation.isPending
           ? "Iniciando sesión..."
           : "Iniciar Sesión"}

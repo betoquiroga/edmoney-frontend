@@ -4,9 +4,9 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
 import Card from "@/components/ui/Card"
-import Logo from "@/components/ui/Logo"
 import LoginForm from "@/components/auth/LoginForm"
 import { authService } from "@/services/auth.service"
+import { Logo } from "@/components/ui/Logo"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -22,7 +22,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Logo size="large" className="inline-block" />
+          <Logo />
           <h2 className="mt-4 text-2xl font-bold text-gray-900">
             Iniciar sesión en tu cuenta
           </h2>

@@ -1,39 +1,29 @@
-import Link from "next/link"
+import React from "react"
 
 interface LogoProps {
-  size?: "small" | "medium" | "large"
-  withLink?: boolean
-  className?: string
+  textColor?: string
+  iconSize?: string
 }
 
-const Logo = ({
-  size = "medium",
-  withLink = true,
-  className = "",
-}: LogoProps) => {
-  const sizeClasses = {
-    small: "text-xl",
-    medium: "text-2xl",
-    large: "text-3xl",
-  }
-
-  const logoContent = (
-    <span
-      className={`font-bold ${sizeClasses[size]} text-blue-600 ${className}`}
-    >
-      EDmoney
-    </span>
+export function Logo({
+  textColor = "text-blue-700",
+  iconSize = "w-4 h-4",
+}: LogoProps) {
+  return (
+    <div className="flex items-center">
+      <span className={`font-bold ${textColor}`}>EDmoney</span>
+      <svg
+        className={`${iconSize} ml-1 ${textColor}`}
+        fill="currentColor"
+        viewBox="0 0 20 20"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          fillRule="evenodd"
+          d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm11 1H6v8l4-2 4 2V6z"
+          clipRule="evenodd"
+        />
+      </svg>
+    </div>
   )
-
-  if (withLink) {
-    return (
-      <Link href="/" className="flex items-center focus:outline-none">
-        {logoContent}
-      </Link>
-    )
-  }
-
-  return logoContent
 }
-
-export default Logo

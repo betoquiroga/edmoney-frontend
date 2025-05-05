@@ -1,46 +1,45 @@
-type ButtonVariant = "primary" | "secondary"
+import React from "react"
+import Link from "next/link"
 
-export interface ButtonProps {
+interface ButtonProps {
   children: React.ReactNode
-  type?: "button" | "submit" | "reset"
-  variant?: ButtonVariant
+  href?: string
+  variant?: "primary" | "secondary" | "outline"
   className?: string
-  fullWidth?: boolean
-  disabled?: boolean
   onClick?: () => void
 }
 
-const Button = ({
+export function Button({
   children,
-  type = "button",
+  href,
   variant = "primary",
   className = "",
-  fullWidth = false,
-  disabled = false,
   onClick,
-}: ButtonProps) => {
+}: ButtonProps) {
   const baseClasses =
-    "px-4 py-2 rounded-md font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+    "px-4 py-2 rounded-md font-medium transition-transform hover:-translate-y-1"
 
   const variantClasses = {
-    primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
+    primary:
+      "bg-blue-700 text-white hover:bg-blue-800 shadow-lg shadow-blue-700/20",
     secondary:
-      "bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-500",
+      "bg-white text-blue-700 hover:bg-blue-50 shadow-lg shadow-blue-800/30",
+    outline: "border border-white text-white hover:bg-white/10",
   }
 
-  const widthClass = fullWidth ? "w-full" : ""
-  const disabledClass = disabled ? "opacity-50 cursor-not-allowed" : ""
+  const classes = `${baseClasses} ${variantClasses[variant]} ${className}`
+
+  if (href) {
+    return (
+      <Link href={href} className={classes}>
+        {children}
+      </Link>
+    )
+  }
 
   return (
-    <button
-      type={type}
-      className={`${baseClasses} ${variantClasses[variant]} ${widthClass} ${disabledClass} ${className}`}
-      disabled={disabled}
-      onClick={onClick}
-    >
+    <button className={classes} onClick={onClick}>
       {children}
     </button>
   )
 }
-
-export default Button
