@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^5.0.1",
     "@tanstack/react-query": "^5.75.2",
     "axios": "^1.9.0",
@@ -16,22 +17,20 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.56.2",
-    "zod": "^3.24.3"
+    "zod": "^3.24.4"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@eslint/js": "^9.22.0",
+    "@headlessui/tailwindcss": "^0.2.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "15.3.1",
-    "tailwindcss": "^4",
-    "typescript": "^5",
-    "@eslint/js": "^9.22.0",
-    "@headlessui/tailwindcss": "^0.2.2",
     "@typescript-eslint/eslint-plugin": "^8.26.1",
     "@typescript-eslint/parser": "^8.26.1",
+    "eslint": "^9",
+    "eslint-config-next": "15.3.1",
     "eslint-config-prettier": "^10.1.1",
     "eslint-config-standard-with-typescript": "^43.0.1",
     "eslint-plugin-import": "^2.31.0",
@@ -41,6 +40,8 @@
     "eslint-plugin-react": "^7.37.4",
     "globals": "^16.0.0",
     "prettier": "^3.5.3",
+    "tailwindcss": "^4",
+    "typescript": "^5",
     "typescript-eslint": "^8.26.1"
   }
 }
