@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
-import { transactionFormSchema, TransactionFormValues } from "./types"
+import { transactionFormSchema, TransactionFormInputs } from "./types"
 import FormInput from "../../../../components/ui/FormInput"
 import FormSelect from "../../../../components/ui/FormSelect"
 import FormDatePicker from "../../../../components/ui/FormDatePicker"
@@ -14,9 +14,18 @@ import { useState } from "react"
 import { TransactionType } from "../../../../types/category.types"
 import { CreateTransactionDto } from "../../../../types/transaction.types"
 
+// Mock de métodos de entrada (en un entorno real, esto vendría de la API)
+const INPUT_METHODS = {
+  MANUAL_FORM: "46de3252-a59f-4e0b-8afc-b81e65b20013", // ID para el formulario manual
+}
+
+// Mock del ID de usuario (en un entorno real, vendría de autenticación)
+const CURRENT_USER_ID = "b5284458-258c-4d11-bcd6-2cdf4afda913"
+
 const TransactionForm = () => {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   // TODO: Replace with real data from backend
   const mockCategories = [
@@ -59,23 +68,41 @@ const TransactionForm = () => {
     { value: "MXN", label: "MXN - Peso mexicano" },
   ]
 
+  // Obtener la fecha y hora actual en formato ISO para el valor por defecto
+  const getCurrentDateTimeString = () => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, "0")
+    const day = String(now.getDate()).padStart(2, "0")
+    const hours = String(now.getHours()).padStart(2, "0")
+    const minutes = String(now.getMinutes()).padStart(2, "0")
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`
+  }
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<TransactionFormValues>({
+    watch,
+  } = useForm<TransactionFormInputs>({
     resolver: zodResolver(transactionFormSchema) as any,
     defaultValues: {
-      userId: "1", // This should come from auth context
-      inputMethodId: "1", // Assuming "1" is the ID for manual form input
+      userId: CURRENT_USER_ID, // ID de usuario en formato UUID
+      inputMethodId: INPUT_METHODS.MANUAL_FORM, // UUID para método de entrada manual
+      type: TransactionType.EXPENSE, // Establecer un valor por defecto
       currency: "USD",
-      transactionDate: new Date(),
+      transactionDate: getCurrentDateTimeString(),
       isRecurring: false,
     },
   })
 
+  // Para debug - mostrar valores en tiempo real
+  const watchedValues = watch()
+  console.log("Valores actuales del formulario:", watchedValues)
+
   const createTransaction = useMutation({
-    mutationFn: (data: TransactionFormValues) => {
+    mutationFn: async (data: any) => {
       // Convert to API format
       const apiData: CreateTransactionDto = {
         user_id: data.userId,
@@ -90,20 +117,59 @@ const TransactionForm = () => {
         is_recurring: data.isRecurring,
         recurring_id: data.recurringId,
       }
-      return transactionsService.create(apiData)
+
+      console.log("Enviando datos a la API:", apiData)
+      try {
+        const result = await transactionsService.create(apiData)
+        console.log("Respuesta de la API:", result)
+        return result
+      } catch (error) {
+        console.error("Error en la llamada a la API:", error)
+        throw error
+      }
     },
     onSuccess: () => {
+      console.log("Transacción creada exitosamente, redirigiendo...")
       router.push("/transacciones")
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error creating transaction:", error)
+      setErrorMessage(
+        error?.message ||
+          "Error al crear la transacción. Verifica los datos e intenta nuevamente.",
+      )
       setIsSubmitting(false)
     },
   })
 
-  const onSubmit = (data: TransactionFormValues) => {
+  const onSubmit = (data: TransactionFormInputs) => {
+    console.log("Formulario enviado con datos:", data)
     setIsSubmitting(true)
-    createTransaction.mutate(data)
+    setErrorMessage(null)
+
+    try {
+      // Asegurarse de que inputMethodId sea un UUID válido
+      if (!data.inputMethodId || data.inputMethodId === "1") {
+        data.inputMethodId = INPUT_METHODS.MANUAL_FORM
+      }
+
+      // Asegurarse de que userId sea un UUID válido
+      if (!data.userId || data.userId === "1") {
+        data.userId = CURRENT_USER_ID
+      }
+
+      // Enviar los datos directamente sin volver a validar con Zod
+      // ya que el resolver de react-hook-form ya los validó
+      createTransaction.mutate(data)
+    } catch (error: any) {
+      console.error("Error al procesar el formulario:", error)
+      setErrorMessage(
+        error?.errors?.[0]?.message ||
+          error?.message ||
+          "Error al procesar el formulario",
+      )
+      setIsSubmitting(false)
+    }
   }
 
   const handleCancel = () => {
@@ -111,7 +177,13 @@ const TransactionForm = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+      {errorMessage && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {errorMessage}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormSelect
           id="type"
@@ -201,6 +273,18 @@ const TransactionForm = () => {
         >
           {isSubmitting ? "Guardando..." : "Guardar transacción"}
         </button>
+      </div>
+
+      {/* Debug info - remover en producción */}
+      <div className="mt-8 p-4 border border-gray-200 rounded bg-gray-50 text-xs">
+        <details>
+          <summary className="cursor-pointer font-semibold">
+            Debug: Valores del formulario
+          </summary>
+          <pre className="mt-2 whitespace-pre-wrap">
+            {JSON.stringify(watchedValues, null, 2)}
+          </pre>
+        </details>
       </div>
     </form>
   )
