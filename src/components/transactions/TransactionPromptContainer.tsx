@@ -22,19 +22,9 @@ export function TransactionPromptContainer() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="w-fullmx-auto">
       <div className="bg-white shadow overflow-hidden rounded-lg">
         <div className="p-6">
-          <div className="mb-6">
-            <h2 className="text-lg font-medium text-gray-900">
-              Crear Transacción con Lenguaje Natural
-            </h2>
-            <p className="mt-1 text-sm text-gray-500">
-              Describe tu transacción en lenguaje natural y la procesaremos
-              automáticamente.
-            </p>
-          </div>
-
           {isLoading ? (
             <div className="flex justify-center items-center py-12">
               <LoadingSpinner />
