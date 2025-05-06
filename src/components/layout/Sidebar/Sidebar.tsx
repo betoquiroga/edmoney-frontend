@@ -1,6 +1,7 @@
 import { usePathname } from "next/navigation"
 import NavItem from "./NavItem"
 import { SidebarProps } from "./types"
+import { useState, useEffect } from "react"
 
 // Icons
 const DashboardIcon = () => (
@@ -91,86 +92,169 @@ const SettingsIcon = () => (
   </svg>
 )
 
+// Menu Toggle Icon
+const MenuToggleIcon = () => (
+  <svg
+    className="w-6 h-6"
+    fill="currentColor"
+    viewBox="0 0 20 20"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      fillRule="evenodd"
+      d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+      clipRule="evenodd"
+    ></path>
+  </svg>
+)
+
+// Close Icon
+const CloseIcon = () => (
+  <svg
+    className="w-6 h-6"
+    fill="currentColor"
+    viewBox="0 0 20 20"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      fillRule="evenodd"
+      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+      clipRule="evenodd"
+    ></path>
+  </svg>
+)
+
 const Sidebar = ({ userName }: SidebarProps) => {
   const pathname = usePathname()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  // Close sidebar when route changes on mobile
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+  }, [pathname])
+
+  // Close sidebar when clicking outside on mobile
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (
+        isMobileMenuOpen &&
+        !target.closest(".sidebar-container") &&
+        !target.closest(".mobile-menu-button")
+      ) {
+        setIsMobileMenuOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [isMobileMenuOpen])
 
   return (
-    <div className="flex flex-col h-full bg-blue-700 text-white">
-      <div className="p-4 border-b border-blue-800">
-        <h1 className="flex items-center text-xl font-bold">
-          <span>EDmoney</span>
-          <svg
-            className="w-4 h-4 ml-1 text-white"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              fillRule="evenodd"
-              d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm11 1H6v8l4-2 4 2V6z"
-              clipRule="evenodd"
-            ></path>
-          </svg>
-        </h1>
-      </div>
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="fixed top-4 right-4 z-50 lg:hidden bg-blue-700 text-white p-2 rounded-md mobile-menu-button"
+        aria-label="Toggle menu"
+      >
+        {isMobileMenuOpen ? <CloseIcon /> : <MenuToggleIcon />}
+      </button>
 
-      <nav className="flex-1 p-4 space-y-1">
-        <NavItem
-          href="/dashboard"
-          icon={<DashboardIcon />}
-          label="Dashboard"
-          isActive={pathname === "/dashboard"}
+      {/* Overlay for mobile */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+          aria-hidden="true"
         />
-        <NavItem
-          href="/transacciones"
-          icon={<TransactionsIcon />}
-          label="Transacciones"
-          isActive={pathname === "/transacciones"}
-        />
-        <NavItem
-          href="/informes"
-          icon={<ReportsIcon />}
-          label="Informes"
-          isActive={pathname === "/informes"}
-        />
-        <NavItem
-          href="/cuentas"
-          icon={<AccountsIcon />}
-          label="Cuentas"
-          isActive={pathname === "/cuentas"}
-        />
-        <NavItem
-          href="/categorias"
-          icon={<CategoriesIcon />}
-          label="Categorías"
-          isActive={pathname === "/categorias"}
-        />
-        <NavItem
-          href="/metas"
-          icon={<GoalsIcon />}
-          label="Metas"
-          isActive={pathname === "/metas"}
-        />
-      </nav>
+      )}
 
-      <div className="p-4 border-t border-blue-800">
-        <NavItem
-          href="/configuracion"
-          icon={<SettingsIcon />}
-          label="Configuración"
-          isActive={pathname === "/configuracion"}
-        />
-
-        <div className="flex items-center mt-4 p-3 rounded-lg bg-blue-800">
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-blue-700 font-bold">
-            {userName.charAt(0)}
+      {/* Sidebar */}
+      <div
+        className={`sidebar-container fixed inset-y-0 left-0 w-64 z-40 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:w-64 ${
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex flex-col h-full min-h-screen bg-blue-700 text-white overflow-y-auto">
+          <div className="p-4 border-b border-blue-800">
+            <h1 className="flex items-center text-xl font-bold">
+              <span>EDmoney</span>
+              <svg
+                className="w-4 h-4 ml-1 text-white"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm11 1H6v8l4-2 4 2V6z"
+                  clipRule="evenodd"
+                ></path>
+              </svg>
+            </h1>
           </div>
-          <div className="ml-3">
-            <p className="text-sm font-medium text-white">{userName}</p>
+
+          <nav className="flex-1 p-4 space-y-1">
+            <NavItem
+              href="/dashboard"
+              icon={<DashboardIcon />}
+              label="Dashboard"
+              isActive={pathname === "/dashboard"}
+            />
+            <NavItem
+              href="/transacciones"
+              icon={<TransactionsIcon />}
+              label="Transacciones"
+              isActive={pathname === "/transacciones"}
+            />
+            <NavItem
+              href="/informes"
+              icon={<ReportsIcon />}
+              label="Informes"
+              isActive={pathname === "/informes"}
+            />
+            <NavItem
+              href="/cuentas"
+              icon={<AccountsIcon />}
+              label="Cuentas"
+              isActive={pathname === "/cuentas"}
+            />
+            <NavItem
+              href="/categorias"
+              icon={<CategoriesIcon />}
+              label="Categorías"
+              isActive={pathname === "/categorias"}
+            />
+            <NavItem
+              href="/metas"
+              icon={<GoalsIcon />}
+              label="Metas"
+              isActive={pathname === "/metas"}
+            />
+          </nav>
+
+          <div className="p-4 border-t border-blue-800">
+            <NavItem
+              href="/configuracion"
+              icon={<SettingsIcon />}
+              label="Configuración"
+              isActive={pathname === "/configuracion"}
+            />
+
+            <div className="flex items-center mt-4 p-3 rounded-lg bg-blue-800">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-blue-700 font-bold">
+                {userName.charAt(0)}
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-white">{userName}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 
