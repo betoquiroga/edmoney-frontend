@@ -8,19 +8,10 @@ import DashboardLayout from "../../components/layout/DashboardLayout"
 // Dashboard components
 import BalanceCard from "../../components/dashboard/BalanceCard"
 import MonthlyTotals from "../../components/dashboard/MonthlyTotals"
-import CategoryExpenses from "../../components/dashboard/CategoryExpenses"
 import RecentTransactions from "../../components/dashboard/RecentTransactions"
 
 // Mock data
-import {
-  recentTransactions,
-  monthlyTotals,
-  categoryExpenses,
-} from "../../mocks/transactions"
-
-// Navigation
-import PromptOptionCard from "@/components/transacciones/PromptOptionCard"
-import FormularioOptionCard from "@/components/transacciones/FormularioOptionCard"
+import { recentTransactions, monthlyTotals } from "../../mocks/transactions"
 
 const DashboardPage = () => {
   const [isLoading, setIsLoading] = useState(true)
@@ -99,27 +90,6 @@ const DashboardPage = () => {
             balance={monthlyTotals.balance}
           />
         </div>
-        <div className="md:col-span-8">
-          <div className="bg-white rounded-lg shadow-sm">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-base font-medium text-gray-700">
-                Crear transacción
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
-              <FormularioOptionCard />
-              <PromptOptionCard />
-            </div>
-          </div>
-        </div>
-        <div className="md:col-span-4">
-          <CategoryExpenses
-            categories={categoryExpenses}
-            totalAmount={1265.44}
-          />
-        </div>
-
-        {/* Bottom row */}
         <div className="md:col-span-12">
           <RecentTransactions transactions={recentTransactions} />
         </div>
