@@ -37,15 +37,6 @@ const BalanceCard = ({
           anterior
         </span>
       </div>
-
-      <div className="flex mt-6 space-x-2">
-        <button className="bg-blue-700 text-white px-4 py-2 rounded-md flex items-center justify-center flex-1">
-          <span className="mr-1">+</span> Ingreso
-        </button>
-        <button className="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-md flex items-center justify-center flex-1">
-          <span className="mr-1">−</span> Egreso
-        </button>
-      </div>
     </div>
   )
 }

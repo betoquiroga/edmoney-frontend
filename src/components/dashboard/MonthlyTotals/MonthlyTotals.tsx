@@ -14,10 +14,6 @@ const MonthlyTotals = ({ income, expense, balance }: MonthlyTotalsProps) => {
 
   return (
     <div className="bg-white rounded-lg p-6 shadow-sm">
-      <h2 className="text-gray-500 text-sm uppercase font-medium mb-4">
-        Este Mes
-      </h2>
-
       <div className="space-y-4">
         <div>
           <div className="flex justify-between items-center mb-1">

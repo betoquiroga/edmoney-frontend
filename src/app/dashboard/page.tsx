@@ -10,7 +10,6 @@ import BalanceCard from "../../components/dashboard/BalanceCard"
 import MonthlyTotals from "../../components/dashboard/MonthlyTotals"
 import CategoryExpenses from "../../components/dashboard/CategoryExpenses"
 import RecentTransactions from "../../components/dashboard/RecentTransactions"
-import AddTransaction from "../../components/dashboard/AddTransaction"
 
 // Mock data
 import {
@@ -20,10 +19,10 @@ import {
 } from "../../mocks/transactions"
 
 // Navigation
-import { useRouter } from "next/navigation"
+import PromptOptionCard from "@/components/transacciones/PromptOptionCard"
+import FormularioOptionCard from "@/components/transacciones/FormularioOptionCard"
 
 const DashboardPage = () => {
-  const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -34,10 +33,6 @@ const DashboardPage = () => {
 
     return () => clearTimeout(timer)
   }, [])
-
-  const handleAddTransaction = () => {
-    router.push("/transacciones/nueva")
-  }
 
   if (isLoading) {
     return (
@@ -104,16 +99,24 @@ const DashboardPage = () => {
             balance={monthlyTotals.balance}
           />
         </div>
-
-        {/* Middle row */}
-        <div className="md:col-span-7">
+        <div className="md:col-span-8">
+          <div className="bg-white rounded-lg shadow-sm">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-base font-medium text-gray-700">
+                Crear transacción
+              </h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+              <FormularioOptionCard />
+              <PromptOptionCard />
+            </div>
+          </div>
+        </div>
+        <div className="md:col-span-4">
           <CategoryExpenses
             categories={categoryExpenses}
             totalAmount={1265.44}
           />
-        </div>
-        <div className="md:col-span-5">
-          <AddTransaction onAddTransaction={handleAddTransaction} />
         </div>
 
         {/* Bottom row */}

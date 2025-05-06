@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { CategoryExpensesProps, CategoryExpense } from "./types"
 
 // Simplified chart component
@@ -62,8 +61,6 @@ const CategoryExpenses = ({
   categories,
   totalAmount,
 }: CategoryExpensesProps) => {
-  const [activeTab, setActiveTab] = useState("current")
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -82,30 +79,6 @@ const CategoryExpenses = ({
           Gasto por Categoría (Este Mes)
         </h3>
       </div>
-
-      <div className="flex border-b border-gray-200">
-        <button
-          className={`flex-1 py-2 text-sm font-medium ${
-            activeTab === "current"
-              ? "text-blue-600 border-b-2 border-blue-600"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-          onClick={() => setActiveTab("current")}
-        >
-          Este Mes
-        </button>
-        <button
-          className={`flex-1 py-2 text-sm font-medium ${
-            activeTab === "previous"
-              ? "text-blue-600 border-b-2 border-blue-600"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-          onClick={() => setActiveTab("previous")}
-        >
-          Mes Pasado
-        </button>
-      </div>
-
       <div className="px-6 py-4">
         <div className="flex">
           <div className="flex-1 flex justify-center">
@@ -119,40 +92,6 @@ const CategoryExpenses = ({
             <span className="text-black font-semibold">
               ${formatCurrency(totalAmount)}
             </span>
-          </div>
-
-          <div className="space-y-3">
-            {categories.map((category, index) => (
-              <div
-                key={category.id}
-                className="flex items-center justify-between"
-              >
-                <div className="flex items-center">
-                  <div
-                    className={`w-3 h-3 rounded-full mr-2 ${
-                      index === 0
-                        ? "bg-blue-500"
-                        : index === 1
-                          ? "bg-green-500"
-                          : index === 2
-                            ? "bg-orange-500"
-                            : index === 3
-                              ? "bg-red-500"
-                              : "bg-purple-500"
-                    }`}
-                  ></div>
-                  <span className="text-sm">{category.name}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium">
-                    ${formatCurrency(category.amount)}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {category.percentage}%
-                  </span>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </div>
