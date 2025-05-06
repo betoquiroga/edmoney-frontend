@@ -9,6 +9,7 @@ import {
   PaginatedTransactions,
   TotalsByPeriodDto,
 } from "../types/transaction.types"
+import axios from "axios"
 
 export class TransactionsService {
   private apiService: ApiService
@@ -123,6 +124,24 @@ export class TransactionsService {
    */
   public async remove(id: string, userId: string): Promise<void> {
     await this.apiService.delete(`/transactions/${id}?userId=${userId}`)
+  }
+
+  /**
+   * Create a transaction from a natural language prompt
+   * @param message The user's text prompt
+   * @param context Additional context data
+   * @param image Optional image data
+   */
+  public async createFromPrompt(
+    message: string,
+    context: string,
+    image?: string,
+  ): Promise<TransactionResponse> {
+    const response = await axios.post<TransactionResponse>(
+      "http://localhost:3001/api/transactions",
+      { message, context, image },
+    )
+    return response.data
   }
 
   /**

@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const { message, context, image } = await request.json()
 
     // Generate prompt with context and message
-    const prompt = `${context}\n\n${message}`
+    const prompt = `CONTEXT: ${context}\n\nMESSAGE: ${message}`
 
     // Prepare user content array
     const userContent: ResponseInputMessageContentList = [
