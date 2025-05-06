@@ -26,57 +26,7 @@ const TransactionsIcon = () => (
     <path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z"></path>
   </svg>
 )
-const ReportsIcon = () => (
-  <svg
-    className="w-5 h-5"
-    fill="currentColor"
-    viewBox="0 0 20 20"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path>
-    <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path>
-  </svg>
-)
-const AccountsIcon = () => (
-  <svg
-    className="w-5 h-5"
-    fill="currentColor"
-    viewBox="0 0 20 20"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path>
-    <path
-      fillRule="evenodd"
-      d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"
-      clipRule="evenodd"
-    ></path>
-  </svg>
-)
-const CategoriesIcon = () => (
-  <svg
-    className="w-5 h-5"
-    fill="currentColor"
-    viewBox="0 0 20 20"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5z"></path>
-    <path d="M5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5z"></path>
-    <path d="M11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5z"></path>
-    <path d="M11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-  </svg>
-)
-const GoalsIcon = () => (
-  <svg
-    className="w-5 h-5"
-    fill="currentColor"
-    viewBox="0 0 20 20"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path d="M5 3a1 1 0 000 2c5.523 0 10 4.477 10 10a1 1 0 102 0C17 8.373 11.627 3 5 3z"></path>
-    <path d="M4 9a1 1 0 011-1 7 7 0 017 7 1 1 0 11-2 0 5 5 0 00-5-5 1 1 0 01-1-1z"></path>
-    <circle cx="5" cy="5" r="2"></circle>
-  </svg>
-)
+
 const SettingsIcon = () => (
   <svg
     className="w-5 h-5"
@@ -166,16 +116,16 @@ const Sidebar = ({ userName }: SidebarProps) => {
       {/* Overlay for mobile */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/50 bg-blend-luminosity blur-3xl bg-opacity-50 z-30 lg:hidden"
           aria-hidden="true"
         />
       )}
 
       {/* Sidebar */}
       <div
-        className={`sidebar-container fixed inset-y-0 left-0 w-64 z-40 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:w-64 ${
+        className={`fixed inset-y-0 left-0 w-64 z-40 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 lg:w-64 ${
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        } lg:block`}
       >
         <div className="flex flex-col h-full min-h-screen bg-blue-700 text-white overflow-y-auto">
           <div className="p-4 border-b border-blue-800">
@@ -208,30 +158,6 @@ const Sidebar = ({ userName }: SidebarProps) => {
               icon={<TransactionsIcon />}
               label="Transacciones"
               isActive={pathname === "/transacciones"}
-            />
-            <NavItem
-              href="/informes"
-              icon={<ReportsIcon />}
-              label="Informes"
-              isActive={pathname === "/informes"}
-            />
-            <NavItem
-              href="/cuentas"
-              icon={<AccountsIcon />}
-              label="Cuentas"
-              isActive={pathname === "/cuentas"}
-            />
-            <NavItem
-              href="/categorias"
-              icon={<CategoriesIcon />}
-              label="Categorías"
-              isActive={pathname === "/categorias"}
-            />
-            <NavItem
-              href="/metas"
-              icon={<GoalsIcon />}
-              label="Metas"
-              isActive={pathname === "/metas"}
             />
           </nav>
 
