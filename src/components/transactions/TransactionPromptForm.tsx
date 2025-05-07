@@ -4,6 +4,7 @@ import { z } from "zod"
 import { transactionsService } from "@/services/transactions.service"
 import { TransactionPromptResponse } from "@/types/transaction-prompt.types"
 import { useState, useRef, ChangeEvent, DragEvent } from "react"
+import { useUser } from "../layout/DashboardLayout"
 
 const promptSchema = z.object({
   message: z.string().min(5, "El mensaje debe tener al menos 5 caracteres"),
@@ -24,6 +25,7 @@ export function TransactionPromptForm({
   const [imageName, setImageName] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { user } = useUser()
 
   const {
     register,
@@ -85,7 +87,7 @@ export function TransactionPromptForm({
     }
   }
 
-  const contextDefault = `<contexto> user_id: b5284458-258c-4d11-bcd6-2cdf4afda913 Categorías disponibles: ID | name f47ac10b-58cc-4372-a567-0e02b2c3d479 | Alimentación 38c4e644-6c23-4b85-9cb4-93e0b91bab92 | Transporte 1a5f9851-53e1-4f0c-b8ad-76c6b8e4ff37 | Salario c71f23c1-4a09-4b8a-b866-4210b13ee7d8Entretenimiento db3eb5d3-86a6-4d1c-9ca6-6e98baa3d1e6 | Transferencia entre cuentas Payment methods disponibles: id | name eea04a3a-ab7d-46c4-b90e-4aa8f6c4284d | Cash ba384815-d670-47ea-bee1-f919995180ce | Credit Card 780e54f4-3a17-4de0-8645-425681bcd3f5 | Debit Card 51284ad5-0adc-473e-aa64-cc6dd78c03bd | Bank Transfer 30dd8a7f-cc49-490a-8b0a-855fb2d4451d | PayPal (Si el usuario no te dice el método, usa siempre Cash) input_method_id: 5df021e9-7955-49ba-9488-de9a21bc5eca transaction_date: ${new Date().toISOString()} </contexto>`
+  const contextDefault = `<contexto> user_id: ${user?.id} Categorías disponibles: ID | name f47ac10b-58cc-4372-a567-0e02b2c3d479 | Alimentación 38c4e644-6c23-4b85-9cb4-93e0b91bab92 | Transporte 1a5f9851-53e1-4f0c-b8ad-76c6b8e4ff37 | Salario c71f23c1-4a09-4b8a-b866-4210b13ee7d8Entretenimiento db3eb5d3-86a6-4d1c-9ca6-6e98baa3d1e6 | Transferencia entre cuentas Payment methods disponibles: id | name eea04a3a-ab7d-46c4-b90e-4aa8f6c4284d | Cash ba384815-d670-47ea-bee1-f919995180ce | Credit Card 780e54f4-3a17-4de0-8645-425681bcd3f5 | Debit Card 51284ad5-0adc-473e-aa64-cc6dd78c03bd | Bank Transfer 30dd8a7f-cc49-490a-8b0a-855fb2d4451d | PayPal (Si el usuario no te dice el método, usa siempre Cash) input_method_id: 5df021e9-7955-49ba-9488-de9a21bc5eca Si el mensaje del usuario o la imagen adjunta no tiene fecha de transacción, usa la fecha actual: transaction_date: ${new Date().toISOString()} </contexto>`
   const onSubmit = async (data: PromptFormValues) => {
     try {
       setLoading(true)
