@@ -138,10 +138,33 @@ export class TransactionsService {
     image?: string,
   ): Promise<TransactionResponse> {
     const response = await axios.post<TransactionResponse>(
-      "http://localhost:3001/api/transactions",
+      "/api/transactions",
       { message, context, image },
     )
     return response.data
+  }
+
+  /**
+   * Transcribe audio to text using OpenAI
+   * @param audioBlob The audio blob to transcribe
+   */
+  public async transcribeAudio(audioBlob: Blob): Promise<string> {
+    // Create form data to send the audio file
+    const formData = new FormData()
+    formData.append("audio", audioBlob, "voice_recording.webm")
+
+    // Send the audio file to the transcription endpoint
+    const response = await axios.post<{ text: string }>(
+      "/api/transcribe",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    )
+
+    return response.data.text
   }
 
   /**
