@@ -69,29 +69,31 @@ export function TransactionPromptModal({
     <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
       {/* Background overlay */}
       <div
-        className="fixed inset-0 bg-gray-500/50 bg-opacity-40 transition-opacity"
+        className="fixed inset-0 bg-gray-500/50 dark:bg-gray-900/70 bg-opacity-40 transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Modal content */}
-      <div className="relative z-50 w-full max-w-md md:max-w-lg bg-white rounded-lg shadow-xl overflow-hidden">
-        <div className="bg-white p-6">
+      <div className="relative z-50 w-full max-w-md md:max-w-lg bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 p-6">
           <div className="flex flex-col">
             {response.transaction ? (
               <div className="w-full">
-                <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
+                <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white mb-4">
                   Detalles de la Transacción
                 </h3>
                 <div className="space-y-4">
-                  <div className="bg-gray-50 p-4 rounded-md">
+                  <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
                     <div className="mb-2">
-                      <span className="font-medium text-gray-700">Tipo: </span>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        Tipo:{" "}
+                      </span>
                       <span
                         className={`px-2 py-1 rounded text-sm ${
                           response.transaction.type === "expense"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-green-100 text-green-800"
+                            ? "bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300"
+                            : "bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300"
                         }`}
                       >
                         {response.transaction.type === "expense"
@@ -101,8 +103,10 @@ export function TransactionPromptModal({
                     </div>
 
                     <div className="mb-2">
-                      <span className="font-medium text-gray-700">Monto: </span>
-                      <span className="font-semibold">
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        Monto:{" "}
+                      </span>
+                      <span className="font-semibold dark:text-gray-200">
                         {formatCurrency(
                           response.transaction.amount,
                           response.transaction.currency,
@@ -111,24 +115,26 @@ export function TransactionPromptModal({
                     </div>
 
                     <div className="mb-2">
-                      <span className="font-medium text-gray-700">
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
                         Descripción:{" "}
                       </span>
-                      <span>
+                      <span className="dark:text-gray-200">
                         {response.transaction.description || "Sin descripción"}
                       </span>
                     </div>
 
                     <div className="mb-2">
-                      <span className="font-medium text-gray-700">Fecha: </span>
-                      <span>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        Fecha:{" "}
+                      </span>
+                      <span className="dark:text-gray-200">
                         {new Date(
                           response.transaction.transaction_date,
                         ).toLocaleDateString()}
                       </span>
                     </div>
 
-                    <div className="pt-2 text-sm text-green-600">
+                    <div className="pt-2 text-sm text-green-600 dark:text-green-400">
                       {response.message}
                     </div>
 
@@ -137,8 +143,8 @@ export function TransactionPromptModal({
                       <div
                         className={`mt-3 p-2 rounded text-sm ${
                           saveResult.status === "success"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
+                            ? "bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300"
+                            : "bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300"
                         }`}
                       >
                         {saveResult.message}
@@ -149,21 +155,23 @@ export function TransactionPromptModal({
               </div>
             ) : (
               <div className="w-full text-center">
-                <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
+                <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white mb-4">
                   Respuesta
                 </h3>
                 <div>
-                  <p className="text-md text-gray-500">{response.message}</p>
+                  <p className="text-md text-gray-500 dark:text-gray-400">
+                    {response.message}
+                  </p>
                 </div>
               </div>
             )}
           </div>
         </div>
-        <div className="bg-gray-50 px-4 py-3 sm:px-6 flex justify-end space-x-3">
+        <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 flex justify-end space-x-3">
           {response.transaction && saveResult?.status !== "success" && (
             <button
               type="button"
-              className={`inline-flex justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${isSaving ? "opacity-75 cursor-not-allowed" : ""}`}
+              className={`inline-flex justify-center rounded-md border border-transparent bg-green-600 dark:bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 dark:hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-600 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${isSaving ? "opacity-75 cursor-not-allowed" : ""}`}
               onClick={handleSaveTransaction}
               disabled={isSaving}
             >
@@ -172,7 +180,7 @@ export function TransactionPromptModal({
           )}
           <button
             type="button"
-            className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 dark:bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
             onClick={onClose}
           >
             Cerrar
