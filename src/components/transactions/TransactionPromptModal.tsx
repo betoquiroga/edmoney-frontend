@@ -160,7 +160,7 @@ export function TransactionPromptModal({
           </div>
         </div>
         <div className="bg-gray-50 px-4 py-3 sm:px-6 flex justify-end space-x-3">
-          {response.transaction && (
+          {response.transaction && saveResult?.status !== "success" && (
             <button
               type="button"
               className={`inline-flex justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${isSaving ? "opacity-75 cursor-not-allowed" : ""}`}
