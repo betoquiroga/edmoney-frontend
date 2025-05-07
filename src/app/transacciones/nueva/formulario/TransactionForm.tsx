@@ -179,7 +179,7 @@ const TransactionForm = () => {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
       {errorMessage && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded">
           {errorMessage}
         </div>
       )}
@@ -252,39 +252,26 @@ const TransactionForm = () => {
 
       <FormCheckbox
         id="isRecurring"
-        label="Es una transacción recurrente"
+        label="Esta es una transacción recurrente"
         register={register("isRecurring")}
         error={errors.isRecurring}
       />
 
-      <div className="flex justify-end space-x-3 pt-4">
+      <div className="flex items-center justify-end space-x-3 pt-4 border-t dark:border-gray-700">
         <button
           type="button"
           onClick={handleCancel}
-          className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-          disabled={isSubmitting}
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
         >
           Cancelar
         </button>
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300"
           disabled={isSubmitting}
+          className="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50"
         >
-          {isSubmitting ? "Guardando..." : "Guardar transacción"}
+          {isSubmitting ? "Guardando..." : "Guardar Transacción"}
         </button>
-      </div>
-
-      {/* Debug info - remover en producción */}
-      <div className="mt-8 p-4 border border-gray-200 rounded bg-gray-50 text-xs">
-        <details>
-          <summary className="cursor-pointer font-semibold">
-            Debug: Valores del formulario
-          </summary>
-          <pre className="mt-2 whitespace-pre-wrap">
-            {JSON.stringify(watchedValues, null, 2)}
-          </pre>
-        </details>
       </div>
     </form>
   )

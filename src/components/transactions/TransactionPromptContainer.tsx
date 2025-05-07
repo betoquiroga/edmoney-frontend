@@ -23,12 +23,12 @@ export function TransactionPromptContainer() {
 
   return (
     <div className="w-fullmx-auto">
-      <div className="bg-white shadow overflow-hidden rounded-lg">
+      <div className="bg-white dark:bg-gray-800 shadow overflow-hidden rounded-lg">
         <div className="p-6">
           {isLoading ? (
             <div className="flex justify-center items-center py-12">
               <LoadingSpinner />
-              <span className="ml-3 text-gray-600">
+              <span className="ml-3 text-gray-600 dark:text-gray-300">
                 Procesando transacción...
               </span>
             </div>
@@ -53,7 +53,7 @@ export function TransactionPromptContainer() {
 function LoadingSpinner() {
   return (
     <svg
-      className="animate-spin h-5 w-5 text-blue-500"
+      className="animate-spin h-5 w-5 text-blue-500 dark:text-blue-400"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"

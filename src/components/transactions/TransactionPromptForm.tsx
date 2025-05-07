@@ -232,8 +232,8 @@ export function TransactionPromptForm({
             onClick={handleBrowseClick}
             className={`border-2 border-dashed rounded-md px-6 py-12 lg:py-28 text-center cursor-pointer transition mb-12 ${
               isDragging
-                ? "border-blue-500 bg-blue-50"
-                : "border-gray-300/20 hover:border-blue-400"
+                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                : "border-gray-300/20 dark:border-gray-600/30 hover:border-blue-400 dark:hover:border-blue-500"
             }`}
           >
             <input
