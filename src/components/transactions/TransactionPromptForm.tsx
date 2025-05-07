@@ -253,14 +253,16 @@ export function TransactionPromptForm({
                     className="max-h-40 max-w-full object-contain"
                   />
                 </div>
-                <p className="text-sm text-gray-500 truncate">{imageName}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                  {imageName}
+                </p>
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation()
                     removeImage()
                   }}
-                  className="inline-flex items-center px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200"
+                  className="inline-flex items-center px-3 py-1 text-xs font-medium text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900/30 rounded-md hover:bg-red-200 dark:hover:bg-red-800/50"
                 >
                   Remover imagen
                 </button>
@@ -268,7 +270,7 @@ export function TransactionPromptForm({
             ) : (
               <div>
                 <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
+                  className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -281,12 +283,14 @@ export function TransactionPromptForm({
                     d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                   />
                 </svg>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                   {isDragging
                     ? "Suelta la imagen aquí..."
                     : "Arrastra y suelta una imagen, o haz clic para seleccionar"}
                 </p>
-                <p className="mt-1 text-xs text-gray-400">PNG, JPG, GIF</p>
+                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                  PNG, JPG, GIF
+                </p>
               </div>
             )}
           </div>
@@ -294,20 +298,20 @@ export function TransactionPromptForm({
         <div className="flex items-center mb-4">
           <label
             htmlFor="message"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
             Describe tu transacción
           </label>
           <div className="ml-auto">
             {isRecording ? (
               <div className="flex items-center">
-                <span className="text-red-500 text-sm mr-2 animate-pulse">
+                <span className="text-red-500 dark:text-red-400 text-sm mr-2 animate-pulse">
                   Grabando {formatTime(recordingTime)}
                 </span>
                 <button
                   type="button"
                   onClick={stopRecording}
-                  className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -327,7 +331,7 @@ export function TransactionPromptForm({
               <button
                 type="button"
                 onClick={startRecording}
-                className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -348,19 +352,21 @@ export function TransactionPromptForm({
         <textarea
           id="message"
           rows={3}
-          className="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full rounded-md border border-gray-300 dark:border-gray-700 shadow-sm px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
           placeholder="Ej. Compré un café por $5.50 en la cafetería"
           {...register("message")}
         />
         {errors.message && (
-          <p className="mt-1 text-sm text-red-600">{errors.message.message}</p>
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            {errors.message.message}
+          </p>
         )}
       </div>
 
       <div className="flex justify-end">
         <button
           type="submit"
-          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
         >
           Procesar transacción
         </button>

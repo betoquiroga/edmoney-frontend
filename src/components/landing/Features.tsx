@@ -4,13 +4,16 @@ import { FeatureCard } from "./FeatureCard"
 
 export function Features() {
   return (
-    <section id="caracteristicas" className="py-16 md:py-24 bg-white">
+    <section
+      id="caracteristicas"
+      className="py-16 md:py-24 bg-white dark:bg-gray-900"
+    >
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
             Características principales
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
             EDmoney te ofrece todo lo que necesitas para gestionar tus finanzas
             personales de manera eficiente y sencilla.
           </p>
@@ -46,8 +49,8 @@ export function Features() {
             }
             title="Informes detallados"
             description="Visualiza informes detallados de tu situación financiera con gráficos claros y completos."
-            bgColor="bg-green-100"
-            iconColor="text-green-700"
+            bgColor="bg-green-100 dark:bg-green-900/40"
+            iconColor="text-green-700 dark:text-green-400"
           />
 
           <FeatureCard
@@ -66,8 +69,8 @@ export function Features() {
             }
             title="Categorías inteligentes"
             description="Organiza tus finanzas con categorías inteligentes que te ayudan a entender tus hábitos de gasto."
-            bgColor="bg-purple-100"
-            iconColor="text-purple-700"
+            bgColor="bg-purple-100 dark:bg-purple-900/30"
+            iconColor="text-purple-700 dark:text-purple-400"
           />
 
           <FeatureCard
@@ -85,8 +88,8 @@ export function Features() {
             }
             title="Metas financieras"
             description="Establece y alcanza tus metas financieras con nuestro sistema de seguimiento y proyecciones."
-            bgColor="bg-orange-100"
-            iconColor="text-orange-700"
+            bgColor="bg-orange-100 dark:bg-orange-900/30"
+            iconColor="text-orange-700 dark:text-orange-400"
           />
         </div>
 
