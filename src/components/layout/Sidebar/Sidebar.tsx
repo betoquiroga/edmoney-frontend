@@ -1,7 +1,7 @@
 import { usePathname } from "next/navigation"
 import NavItem from "./NavItem"
-import { SidebarProps } from "./types"
 import { useState, useEffect } from "react"
+import { useUser } from "../DashboardLayout"
 
 // Icons
 const DashboardIcon = () => (
@@ -74,9 +74,10 @@ const CloseIcon = () => (
   </svg>
 )
 
-const Sidebar = ({ userName }: SidebarProps) => {
+const Sidebar = () => {
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { user } = useUser()
 
   // Close sidebar when route changes on mobile
   useEffect(() => {
@@ -171,10 +172,12 @@ const Sidebar = ({ userName }: SidebarProps) => {
 
             <div className="flex items-center mt-4 p-3 rounded-lg bg-blue-800">
               <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-blue-700 font-bold">
-                {userName.charAt(0)}
+                {user?.name ? user.name.charAt(0) : "?"}
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-white">{userName}</p>
+                <p className="text-sm font-medium text-white">
+                  {user?.name || "Usuario"}
+                </p>
               </div>
             </div>
           </div>

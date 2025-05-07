@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 
 // Layout components
-import DashboardLayout from "../../components/layout/DashboardLayout"
+import { useUser } from "../../components/layout/DashboardLayout"
 
 // Dashboard components
 import BalanceCard from "../../components/dashboard/BalanceCard"
@@ -27,15 +27,15 @@ const DashboardPage = () => {
     [],
   )
 
-  // TODO: Reemplazar por el userId real del usuario autenticado
-  const userId = "demo-user-id"
+  const { user, isLoading: isUserLoading } = useUser()
 
   useEffect(() => {
+    if (!user) return
     const fetchData = async () => {
       try {
         const [summaryData, recentTx] = await Promise.all([
-          transactionsService.getSummary(userId),
-          transactionsService.getRecentTransactions(userId),
+          transactionsService.getSummary(user.id),
+          transactionsService.getRecentTransactions(user.id),
         ])
         setSummary(summaryData)
         setRecentTransactions(recentTx)
@@ -47,20 +47,18 @@ const DashboardPage = () => {
       }
     }
     fetchData()
-  }, [])
+  }, [user])
 
-  if (isLoading) {
+  if (isLoading || isUserLoading) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
-        </div>
-      </DashboardLayout>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+      </div>
     )
   }
 
   return (
-    <DashboardLayout>
+    <>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
 
@@ -118,7 +116,7 @@ const DashboardPage = () => {
           <RecentTransactions transactions={recentTransactions} />
         </div>
       </div>
-    </DashboardLayout>
+    </>
   )
 }
 

@@ -62,6 +62,14 @@ export class UsersService {
     )
     return response.data
   }
+
+  /**
+   * Get the authenticated user (me)
+   */
+  public async me(): Promise<User> {
+    const response = await this.apiService.get<UserResponse>("/users/me")
+    return response.data.user
+  }
 }
 
 // Create a singleton instance of the UsersService

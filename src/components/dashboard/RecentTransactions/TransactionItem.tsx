@@ -70,6 +70,12 @@ const TransactionItem = ({ transaction }: TransactionItemProps) => {
   const { description, amount, transaction_date, type, category_id } =
     transaction
 
+  // Convertir la fecha a objeto Date si es un string
+  const parsedDate =
+    transaction_date instanceof Date
+      ? transaction_date
+      : new Date(transaction_date)
+
   // Format category name if available
   const categoryName = category_id
     ? category_id.replace("cat-", "").charAt(0).toUpperCase() +
@@ -94,7 +100,7 @@ const TransactionItem = ({ transaction }: TransactionItemProps) => {
           {type === TransactionType.INCOME ? "+" : "-"}$
           {Math.abs(amount).toFixed(2)}
         </p>
-        <p className="text-xs text-gray-500">{formatDate(transaction_date)}</p>
+        <p className="text-xs text-gray-500">{formatDate(parsedDate)}</p>
       </div>
 
       <button className="ml-4 text-gray-400 hover:text-gray-600">

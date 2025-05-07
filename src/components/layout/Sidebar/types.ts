@@ -4,7 +4,3 @@ export interface NavItemProps {
   label: string
   isActive?: boolean
 }
-
-export interface SidebarProps {
-  userName: string
-}
