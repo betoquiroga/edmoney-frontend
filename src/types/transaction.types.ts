@@ -7,6 +7,7 @@ export interface Transaction {
   id: string
   user_id: string
   category_id?: string
+  category_name?: string
   payment_method_id?: string
   input_method_id: string
   type: TransactionType

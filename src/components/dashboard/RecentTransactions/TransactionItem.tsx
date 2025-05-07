@@ -67,20 +67,20 @@ const getCategoryIcon = (categoryId: string | undefined): React.ReactNode => {
 }
 
 const TransactionItem = ({ transaction }: TransactionItemProps) => {
-  const { description, amount, transaction_date, type, category_id } =
-    transaction
+  const {
+    description,
+    amount,
+    transaction_date,
+    type,
+    category_id,
+    category_name,
+  } = transaction
 
   // Convertir la fecha a objeto Date si es un string
   const parsedDate =
     transaction_date instanceof Date
       ? transaction_date
       : new Date(transaction_date)
-
-  // Format category name if available
-  const categoryName = category_id
-    ? category_id.replace("cat-", "").charAt(0).toUpperCase() +
-      category_id.replace("cat-", "").slice(1)
-    : "Sin categoría"
 
   return (
     <div className="flex items-center py-3 border-b border-gray-100 last:border-b-0">
@@ -90,7 +90,9 @@ const TransactionItem = ({ transaction }: TransactionItemProps) => {
         <h4 className="text-sm font-medium text-gray-900">
           {description || "Transacción"}
         </h4>
-        <p className="text-xs text-gray-500">{categoryName}</p>
+        <p className="text-xs text-gray-500">
+          {category_name || "Sin categoría"}
+        </p>
       </div>
 
       <div className="text-right">
