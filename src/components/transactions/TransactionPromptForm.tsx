@@ -222,7 +222,10 @@ export function TransactionPromptForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="space-y-4 dark:text-gray-200"
+    >
       <div>
         <div className="mt-4">
           <div
@@ -250,7 +253,7 @@ export function TransactionPromptForm({
                   <img
                     src={imageBase64}
                     alt="Vista previa"
-                    className="max-h-40 max-w-full object-contain"
+                    className="max-h-40 max-w-full object-contain dark:border dark:border-gray-700 dark:rounded"
                   />
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
