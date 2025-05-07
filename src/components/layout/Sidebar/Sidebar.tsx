@@ -2,6 +2,7 @@ import { usePathname } from "next/navigation"
 import NavItem from "./NavItem"
 import { useState, useEffect } from "react"
 import { useUser } from "../DashboardLayout"
+import { authService } from "../../../services/auth.service"
 
 // Icons
 const DashboardIcon = () => (
@@ -24,21 +25,6 @@ const TransactionsIcon = () => (
     xmlns="http://www.w3.org/2000/svg"
   >
     <path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z"></path>
-  </svg>
-)
-
-const SettingsIcon = () => (
-  <svg
-    className="w-5 h-5"
-    fill="currentColor"
-    viewBox="0 0 20 20"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      fillRule="evenodd"
-      d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"
-      clipRule="evenodd"
-    ></path>
   </svg>
 )
 
@@ -74,6 +60,22 @@ const CloseIcon = () => (
   </svg>
 )
 
+// Logout Icon
+const LogoutIcon = () => (
+  <svg
+    className="w-5 h-5"
+    fill="currentColor"
+    viewBox="0 0 20 20"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      fillRule="evenodd"
+      d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h9a1 1 0 001-1v-2a1 1 0 10-2 0v1H4V5h7v1a1 1 0 102 0V4a1 1 0 00-1-1H3zm14.707 4.707a1 1 0 010 1.414L15.414 12l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0z"
+      clipRule="evenodd"
+    ></path>
+  </svg>
+)
+
 const Sidebar = () => {
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -102,6 +104,10 @@ const Sidebar = () => {
       document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [isMobileMenuOpen])
+
+  const handleLogout = () => {
+    authService.logout()
+  }
 
   return (
     <>
@@ -163,12 +169,15 @@ const Sidebar = () => {
           </nav>
 
           <div className="p-4 border-t border-blue-800 dark:border-blue-950">
-            <NavItem
-              href="/configuracion"
-              icon={<SettingsIcon />}
-              label="Configuración"
-              isActive={pathname === "/configuracion"}
-            />
+            <button
+              onClick={handleLogout}
+              className="flex items-center w-full px-3 py-2 rounded-lg hover:bg-blue-800 dark:hover:bg-blue-800 transition-colors"
+            >
+              <span className="inline-flex items-center justify-center">
+                <LogoutIcon />
+              </span>
+              <span className="ml-3">Cerrar sesión</span>
+            </button>
 
             <div className="flex items-center mt-4 p-3 rounded-lg bg-blue-800 dark:bg-blue-950">
               <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-200 flex items-center justify-center text-blue-700 dark:text-blue-900 font-bold">
