@@ -52,7 +52,7 @@ const DashboardPage = () => {
   if (isLoading || isUserLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 dark:border-blue-500"></div>
       </div>
     )
   }
@@ -60,10 +60,12 @@ const DashboardPage = () => {
   return (
     <>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+          Dashboard
+        </h1>
 
         <div className="flex items-center mt-2">
-          <span className="text-gray-500">
+          <span className="text-gray-500 dark:text-gray-400">
             <svg
               className="inline-block w-4 h-4 mr-1"
               fill="currentColor"
@@ -79,7 +81,7 @@ const DashboardPage = () => {
             Abril 2025
           </span>
 
-          <button className="ml-3 text-blue-600 hover:text-blue-800">
+          <button className="ml-3 text-blue-600 hover:text-blue-800 dark:text-blue-500 dark:hover:text-blue-400">
             <svg
               className="w-5 h-5"
               fill="currentColor"

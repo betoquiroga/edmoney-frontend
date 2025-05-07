@@ -66,7 +66,7 @@ export default function RegisterForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {authError && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm mb-4">
+        <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-3 rounded-md text-sm mb-4">
           {authError}
         </div>
       )}
@@ -110,11 +110,11 @@ export default function RegisterForm() {
       </Button>
 
       <div className="text-center mt-4">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           ¿Ya tienes una cuenta?{" "}
           <Link
             href="/login"
-            className="text-blue-600 hover:text-blue-800 font-medium"
+            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
           >
             Iniciar Sesión
           </Link>

@@ -32,7 +32,7 @@ export function FloatingActionButton({ options }: FloatingActionButtonProps) {
                 option.onClick()
                 setIsOpen(false)
               }}
-              className="bg-white text-blue-600 shadow-lg rounded-full py-2 px-4 flex items-center justify-center transition-all hover:bg-blue-50"
+              className="bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-lg rounded-full py-2 px-4 flex items-center justify-center transition-all hover:bg-blue-50 dark:hover:bg-gray-700"
             >
               <span className="mr-2">{option.icon}</span>
               {option.label}
@@ -42,7 +42,7 @@ export function FloatingActionButton({ options }: FloatingActionButtonProps) {
       )}
       <button
         onClick={toggleMenu}
-        className="w-14 h-14 bg-blue-600 rounded-full shadow-lg flex items-center justify-center text-white transition-all hover:bg-blue-700"
+        className="w-14 h-14 bg-blue-600 dark:bg-blue-700 rounded-full shadow-lg flex items-center justify-center text-white transition-all hover:bg-blue-700 dark:hover:bg-blue-800"
       >
         {isOpen ? (
           <XMarkIcon className="h-6 w-6" />

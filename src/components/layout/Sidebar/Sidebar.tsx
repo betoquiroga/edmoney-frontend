@@ -108,7 +108,7 @@ const Sidebar = () => {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="fixed top-4 right-4 z-50 lg:hidden bg-blue-700 text-white p-2 rounded-md mobile-menu-button"
+        className="fixed top-4 right-4 z-50 lg:hidden bg-blue-700 dark:bg-blue-800 text-white p-2 rounded-md mobile-menu-button"
         aria-label="Toggle menu"
       >
         {isMobileMenuOpen ? <CloseIcon /> : <MenuToggleIcon />}
@@ -117,7 +117,7 @@ const Sidebar = () => {
       {/* Overlay for mobile */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/50 bg-blend-luminosity blur-3xl bg-opacity-50 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/50 dark:bg-black/70 bg-blend-luminosity blur-3xl bg-opacity-50 z-30 lg:hidden"
           aria-hidden="true"
         />
       )}
@@ -128,8 +128,8 @@ const Sidebar = () => {
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         } lg:block`}
       >
-        <div className="flex flex-col h-full min-h-screen bg-blue-700 text-white overflow-y-auto">
-          <div className="p-4 border-b border-blue-800">
+        <div className="flex flex-col h-full min-h-screen bg-blue-700 dark:bg-blue-900 text-white overflow-y-auto">
+          <div className="p-4 border-b border-blue-800 dark:border-blue-950">
             <h1 className="flex items-center text-xl font-bold">
               <span>EDmoney</span>
               <svg
@@ -162,7 +162,7 @@ const Sidebar = () => {
             />
           </nav>
 
-          <div className="p-4 border-t border-blue-800">
+          <div className="p-4 border-t border-blue-800 dark:border-blue-950">
             <NavItem
               href="/configuracion"
               icon={<SettingsIcon />}
@@ -170,8 +170,8 @@ const Sidebar = () => {
               isActive={pathname === "/configuracion"}
             />
 
-            <div className="flex items-center mt-4 p-3 rounded-lg bg-blue-800">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-blue-700 font-bold">
+            <div className="flex items-center mt-4 p-3 rounded-lg bg-blue-800 dark:bg-blue-950">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-200 flex items-center justify-center text-blue-700 dark:text-blue-900 font-bold">
                 {user?.name ? user.name.charAt(0) : "?"}
               </div>
               <div className="ml-3">

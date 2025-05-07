@@ -6,7 +6,7 @@ interface LogoProps {
 }
 
 export function Logo({
-  textColor = "text-blue-700",
+  textColor = "text-blue-700 dark:text-blue-400",
   iconSize = "w-4 h-4",
 }: LogoProps) {
   return (
