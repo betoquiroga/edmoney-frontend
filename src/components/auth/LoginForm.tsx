@@ -76,15 +76,6 @@ export default function LoginForm() {
         placeholder="******"
       />
 
-      <div className="flex justify-end">
-        <Link
-          href="/recuperar-password"
-          className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-        >
-          ¿Olvidaste tu contraseña?
-        </Link>
-      </div>
-
       <Button variant="primary">
         {isSubmitting || loginMutation.isPending
           ? "Iniciando sesión..."
