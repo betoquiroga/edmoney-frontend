@@ -23,15 +23,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  console.log("DashboardLayout MONTADO")
-
   useEffect(() => {
     const fetchUser = async () => {
-      console.log("fetchUser EJECUTADO")
       try {
-        console.log("Intentando cargar usuario...")
         const userData = await usersService.me()
-        console.log("Usuario cargado:", userData)
         setUser(userData)
       } catch (error) {
         console.error("Error cargando usuario:", error)

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import DashboardLayout from "../../components/layout/DashboardLayout"
 import { transactionsService } from "../../services/transactions.service"
+import { usersService } from "@/services/users.service"
 import { Transaction } from "../../types/transaction.types"
 
 const TransaccionesPage = () => {
@@ -15,10 +16,9 @@ const TransaccionesPage = () => {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
+        const userData = await usersService.me()
         setIsLoading(true)
-        // Use hardcoded user ID for testing until authentication is properly implemented
-        // In a real app, you would get this from auth context/state
-        const userId = "b5284458-258c-4d11-bcd6-2cdf4afda913" // Replace with actual user ID from authentication
+        const userId = userData.id
         const data = await transactionsService.findAll(userId)
         setTransactions(data)
       } catch (err) {
