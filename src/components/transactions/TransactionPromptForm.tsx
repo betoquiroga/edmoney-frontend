@@ -200,8 +200,22 @@ export function TransactionPromptForm({
 
       // Set the transcribed text to the message field
       setValue("message", text, { shouldValidate: true })
+
+      // Create a transaction using the transcribed text
+      const response = await transactionsService.createFromPrompt(
+        text,
+        contextDefault,
+        undefined,
+      )
+
+      // Process the response
+      onResponse({
+        transaction: response.transaction,
+        message: response.message || "Transacción procesada desde audio",
+      })
     } catch (error) {
-      console.error("Error transcribing audio:", error)
+      console.error("Error transcribing audio or creating transaction:", error)
+      onResponse({ message: "Error al procesar la transacción de audio" })
     } finally {
       setLoading(false)
     }
