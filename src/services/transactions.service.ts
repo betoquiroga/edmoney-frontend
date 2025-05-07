@@ -165,6 +165,34 @@ export class TransactionsService {
     )
     return response.data
   }
+
+  /**
+   * Get financial summary for a user
+   */
+  public async getSummary(userId: string): Promise<{
+    balance: number
+    totalIncome: number
+    totalExpense: number
+    currency: string
+  }> {
+    const response = await this.apiService.get<{
+      balance: number
+      totalIncome: number
+      totalExpense: number
+      currency: string
+    }>(`/transactions/summary?userId=${userId}`)
+    return response.data
+  }
+
+  /**
+   * Get recent transactions for a user (last 10)
+   */
+  public async getRecentTransactions(userId: string): Promise<Transaction[]> {
+    const response = await this.apiService.get<TransactionsResponse>(
+      `/transactions/recent?userId=${userId}`,
+    )
+    return response.data.transactions || response.data
+  }
 }
 
 // Create a singleton instance of the TransactionsService

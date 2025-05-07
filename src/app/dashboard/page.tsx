@@ -11,18 +11,42 @@ import MonthlyTotals from "../../components/dashboard/MonthlyTotals"
 import RecentTransactions from "../../components/dashboard/RecentTransactions"
 
 // Mock data
-import { recentTransactions, monthlyTotals } from "../../mocks/transactions"
+// import { recentTransactions, monthlyTotals } from "../../mocks/transactions"
+import { transactionsService } from "../../services/transactions.service"
+import { Transaction } from "../../types/transaction.types"
 
 const DashboardPage = () => {
   const [isLoading, setIsLoading] = useState(true)
+  const [summary, setSummary] = useState<{
+    balance: number
+    totalIncome: number
+    totalExpense: number
+    currency: string
+  } | null>(null)
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(
+    [],
+  )
+
+  // TODO: Reemplazar por el userId real del usuario autenticado
+  const userId = "demo-user-id"
 
   useEffect(() => {
-    // Simulate loading data
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 500)
-
-    return () => clearTimeout(timer)
+    const fetchData = async () => {
+      try {
+        const [summaryData, recentTx] = await Promise.all([
+          transactionsService.getSummary(userId),
+          transactionsService.getRecentTransactions(userId),
+        ])
+        setSummary(summaryData)
+        setRecentTransactions(recentTx)
+      } catch {
+        setSummary(null)
+        setRecentTransactions([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchData()
   }, [])
 
   if (isLoading) {
@@ -78,16 +102,16 @@ const DashboardPage = () => {
         {/* Top row */}
         <div className="md:col-span-7">
           <BalanceCard
-            currentBalance={1234.56}
-            currency="USD"
+            currentBalance={summary?.balance || 0}
+            currency={summary?.currency || "USD"}
             percentChange={8.2}
           />
         </div>
         <div className="md:col-span-5">
           <MonthlyTotals
-            income={monthlyTotals.income}
-            expense={monthlyTotals.expense}
-            balance={monthlyTotals.balance}
+            income={summary?.totalIncome || 0}
+            expense={summary?.totalExpense || 0}
+            balance={summary?.balance || 0}
           />
         </div>
         <div className="md:col-span-12">
