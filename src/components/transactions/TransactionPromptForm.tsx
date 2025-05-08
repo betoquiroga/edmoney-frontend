@@ -59,9 +59,15 @@ export function TransactionPromptForm({
     ) {
       try {
         // Create AudioContext on iOS only in response to a user gesture
-        const AudioContext =
-          window.AudioContext || (window as any).webkitAudioContext
-        audioContextRef.current = new AudioContext()
+        type AudioContextType = typeof window.AudioContext
+        interface WindowWithWebkitAudio extends Window {
+          webkitAudioContext?: AudioContextType
+        }
+        const AudioContextConstructor: AudioContextType =
+          window.AudioContext ||
+          ((window as WindowWithWebkitAudio)
+            .webkitAudioContext as AudioContextType)
+        audioContextRef.current = new AudioContextConstructor()
 
         // Some iOS versions require an additional step to "unlock" the audio context
         if (audioContextRef.current.state === "suspended") {
