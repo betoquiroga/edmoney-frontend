@@ -6,9 +6,6 @@ import { TransactionPromptResponse } from "@/types/transaction-prompt.types"
 import { useState, useRef, ChangeEvent, DragEvent, useEffect } from "react"
 import { useUser } from "../layout/DashboardLayout"
 
-// Import AudioRecorder polyfill
-import AudioRecorderPolyfill from "audio-recorder-polyfill"
-
 const promptSchema = z.object({
   message: z.string().min(5, "El mensaje debe tener al menos 5 caracteres"),
 })
@@ -35,19 +32,26 @@ export function TransactionPromptForm({
   const audioChunks = useRef<Blob[]>([])
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Use native MediaRecorder or polyfill as needed
+  // Dynamically import polyfill only on client side
   useEffect(() => {
-    // Check if the native MediaRecorder exists and supports audio/webm
-    const isNativeSupported =
-      typeof window !== "undefined" &&
-      window.MediaRecorder &&
-      typeof window.MediaRecorder.isTypeSupported === "function" &&
-      window.MediaRecorder.isTypeSupported("audio/webm")
+    // Dynamic import of audio-recorder-polyfill - will only run on client
+    if (typeof window !== "undefined") {
+      import("audio-recorder-polyfill")
+        .then((module) => {
+          // After import, check if we need to use polyfill
+          const isNativeSupported =
+            window.MediaRecorder &&
+            typeof window.MediaRecorder.isTypeSupported === "function" &&
+            window.MediaRecorder.isTypeSupported("audio/webm")
 
-    // If native is not supported, use polyfill
-    if (!isNativeSupported) {
-      // Use AudioRecorderPolyfill
-      window.MediaRecorder = AudioRecorderPolyfill
+          // If native is not supported, use polyfill
+          if (!isNativeSupported && module.default) {
+            window.MediaRecorder = module.default
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load audio recorder polyfill:", err)
+        })
     }
   }, [])
 
@@ -101,13 +105,18 @@ export function TransactionPromptForm({
 
       // Determine best format based on browser support
       let mimeType = "audio/wav"
-
-      if (window.MediaRecorder.isTypeSupported("audio/webm")) {
-        mimeType = "audio/webm"
-      } else if (window.MediaRecorder.isTypeSupported("audio/mp4")) {
-        mimeType = "audio/mp4"
-      } else if (window.MediaRecorder.isTypeSupported("audio/ogg")) {
-        mimeType = "audio/ogg"
+      if (
+        typeof window !== "undefined" &&
+        window.MediaRecorder &&
+        window.MediaRecorder.isTypeSupported
+      ) {
+        if (window.MediaRecorder.isTypeSupported("audio/webm")) {
+          mimeType = "audio/webm"
+        } else if (window.MediaRecorder.isTypeSupported("audio/mp4")) {
+          mimeType = "audio/mp4"
+        } else if (window.MediaRecorder.isTypeSupported("audio/ogg")) {
+          mimeType = "audio/ogg"
+        }
       }
 
       // Create a new MediaRecorder instance with appropriate options

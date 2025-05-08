@@ -33,7 +33,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         setUser(null)
       } finally {
         setIsLoading(false)
-        console.log("Loading finalizado")
       }
     }
     fetchUser()

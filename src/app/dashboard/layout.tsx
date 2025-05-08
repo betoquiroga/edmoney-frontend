@@ -7,6 +7,5 @@ export default function DashboardPageLayout({
 }: {
   children: React.ReactNode
 }) {
-  console.log("Dashboard App Layout MONTADO")
   return <DashboardLayout>{children}</DashboardLayout>
 }
