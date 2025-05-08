@@ -17,6 +17,15 @@ interface TransactionPromptFormProps {
   setLoading: (loading: boolean) => void
 }
 
+// Detect iOS device
+const isIOS = () => {
+  return (
+    typeof navigator !== "undefined" &&
+    (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1))
+  )
+}
+
 export function TransactionPromptForm({
   onResponse,
   setLoading,
@@ -26,11 +35,70 @@ export function TransactionPromptForm({
   const [isDragging, setIsDragging] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
+  const [isAudioContextReady, setIsAudioContextReady] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { user } = useUser()
   const audioRecorder = useRef<MediaRecorder | null>(null)
   const audioChunks = useRef<Blob[]>([])
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const isIOSDevice = useRef<boolean>(false)
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      isIOSDevice.current = isIOS()
+    }
+  }, [])
+
+  // Initialize audio context on iOS devices within a user gesture
+  const initAudioContext = () => {
+    if (
+      typeof window !== "undefined" &&
+      isIOSDevice.current &&
+      !audioContextRef.current
+    ) {
+      try {
+        // Create AudioContext on iOS only in response to a user gesture
+        const AudioContext =
+          window.AudioContext || (window as any).webkitAudioContext
+        audioContextRef.current = new AudioContext()
+
+        // Some iOS versions require an additional step to "unlock" the audio context
+        if (audioContextRef.current.state === "suspended") {
+          const unlock = () => {
+            // Create and play a silent buffer to unlock the audio context
+            const buffer = audioContextRef.current!.createBuffer(1, 1, 22050)
+            const source = audioContextRef.current!.createBufferSource()
+            source.buffer = buffer
+            source.connect(audioContextRef.current!.destination)
+            source.start(0)
+
+            // Resume the audio context (needed for iOS)
+            audioContextRef.current!.resume().then(() => {
+              setIsAudioContextReady(true)
+              console.log("AudioContext is now ready")
+            })
+
+            // Remove the event listeners once used
+            document.body.removeEventListener("touchstart", unlock)
+            document.body.removeEventListener("touchend", unlock)
+            document.body.removeEventListener("click", unlock)
+          }
+
+          document.body.addEventListener("touchstart", unlock, false)
+          document.body.addEventListener("touchend", unlock, false)
+          document.body.addEventListener("click", unlock, false)
+        } else {
+          setIsAudioContextReady(true)
+        }
+      } catch (err) {
+        console.error("Error initializing AudioContext:", err)
+      }
+    } else {
+      // On non-iOS devices, mark as ready immediately
+      setIsAudioContextReady(true)
+    }
+  }
 
   // Dynamically import polyfill only on client side
   useEffect(() => {
@@ -48,9 +116,22 @@ export function TransactionPromptForm({
           if (!isNativeSupported && module.default) {
             window.MediaRecorder = module.default
           }
+
+          // Initialize audio context for iOS devices (will be activated on user gesture)
+          if (isIOSDevice.current) {
+            // Will be unlocked on user action
+            console.log(
+              "iOS device detected, audio context will be initialized on user gesture",
+            )
+          } else {
+            // Mark as ready for non-iOS devices
+            setIsAudioContextReady(true)
+          }
         })
         .catch((err) => {
           console.error("Failed to load audio recorder polyfill:", err)
+          // Still mark as ready to avoid blocking UI
+          setIsAudioContextReady(true)
         })
     }
   }, [])
@@ -94,6 +175,21 @@ export function TransactionPromptForm({
     return `${mins}:${secs}`
   }
 
+  const prepareRecording = () => {
+    // Initialize audio context if on iOS
+    if (isIOSDevice.current) {
+      initAudioContext()
+      if (!isAudioContextReady) {
+        // If the audio context isn't ready yet, this will have triggered the unlock process
+        console.log("Audio context not ready yet, initialized unlock process")
+        return
+      }
+    }
+
+    // If we're here, either it's not iOS or the audio context is ready
+    startRecording()
+  }
+
   const startRecording = async () => {
     try {
       // Reset the recording state
@@ -102,6 +198,19 @@ export function TransactionPromptForm({
 
       // Request permission to use the microphone
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+
+      // Additional iOS-specific handling to ensure audio context is ready
+      if (
+        isIOSDevice.current &&
+        audioContextRef.current &&
+        audioContextRef.current.state !== "running"
+      ) {
+        try {
+          await audioContextRef.current.resume()
+        } catch (e) {
+          console.error("Failed to resume audio context:", e)
+        }
+      }
 
       // Determine best format based on browser support
       let mimeType = "audio/wav"
@@ -120,12 +229,18 @@ export function TransactionPromptForm({
       }
 
       // Create a new MediaRecorder instance with appropriate options
-      const recorder = new MediaRecorder(stream, { mimeType })
+      // For iOS, use a lower bitrate which can help with compatibility
+      const options: MediaRecorderOptions = {
+        mimeType,
+        audioBitsPerSecond: isIOSDevice.current ? 96000 : undefined,
+      }
+
+      const recorder = new MediaRecorder(stream, options)
       audioRecorder.current = recorder
 
       // Event handler for when data is available
       recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        if (event.data && event.data.size > 0) {
           audioChunks.current.push(event.data)
         }
       }
@@ -135,6 +250,19 @@ export function TransactionPromptForm({
         // Create a blob from the chunks
         const mimeType = recorder.mimeType || "audio/webm"
         const blob = new Blob(audioChunks.current, { type: mimeType })
+
+        // Check if blob is valid (has size greater than header-only)
+        if (blob.size <= 44) {
+          console.error(
+            "Error: Recording produced an empty audio file (only headers)",
+          )
+          // Try again on iOS
+          if (isIOSDevice.current) {
+            alert("Error recording audio. Please try again.")
+            return
+          }
+        }
+
         await handleStopRecording(blob)
       }
 
@@ -143,6 +271,11 @@ export function TransactionPromptForm({
       setIsRecording(true)
     } catch (error) {
       console.error("Error starting recording:", error)
+      if (isIOSDevice.current) {
+        alert(
+          "Error accessing microphone. Please ensure permissions are granted and try again.",
+        )
+      }
     }
   }
 
@@ -373,7 +506,7 @@ export function TransactionPromptForm({
             ) : (
               <button
                 type="button"
-                onClick={startRecording}
+                onClick={prepareRecording}
                 className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
               >
                 <svg
