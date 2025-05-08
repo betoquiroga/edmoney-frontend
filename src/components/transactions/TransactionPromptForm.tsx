@@ -6,6 +6,9 @@ import { TransactionPromptResponse } from "@/types/transaction-prompt.types"
 import { useState, useRef, ChangeEvent, DragEvent, useEffect } from "react"
 import { useUser } from "../layout/DashboardLayout"
 
+// Import AudioRecorder polyfill
+import AudioRecorderPolyfill from "audio-recorder-polyfill"
+
 const promptSchema = z.object({
   message: z.string().min(5, "El mensaje debe tener al menos 5 caracteres"),
 })
@@ -28,9 +31,25 @@ export function TransactionPromptForm({
   const [recordingTime, setRecordingTime] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { user } = useUser()
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const chunksRef = useRef<Blob[]>([])
+  const audioRecorder = useRef<MediaRecorder | null>(null)
+  const audioChunks = useRef<Blob[]>([])
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Use native MediaRecorder or polyfill as needed
+  useEffect(() => {
+    // Check if the native MediaRecorder exists and supports audio/webm
+    const isNativeSupported =
+      typeof window !== "undefined" &&
+      window.MediaRecorder &&
+      typeof window.MediaRecorder.isTypeSupported === "function" &&
+      window.MediaRecorder.isTypeSupported("audio/webm")
+
+    // If native is not supported, use polyfill
+    if (!isNativeSupported) {
+      // Use AudioRecorderPolyfill
+      window.MediaRecorder = AudioRecorderPolyfill
+    }
+  }, [])
 
   const {
     register,
@@ -75,31 +94,43 @@ export function TransactionPromptForm({
     try {
       // Reset the recording state
       setRecordingTime(0)
-      chunksRef.current = []
+      audioChunks.current = []
 
       // Request permission to use the microphone
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
 
-      // Create a new MediaRecorder instance
-      const mediaRecorder = new MediaRecorder(stream)
-      mediaRecorderRef.current = mediaRecorder
+      // Determine best format based on browser support
+      let mimeType = "audio/wav"
+
+      if (window.MediaRecorder.isTypeSupported("audio/webm")) {
+        mimeType = "audio/webm"
+      } else if (window.MediaRecorder.isTypeSupported("audio/mp4")) {
+        mimeType = "audio/mp4"
+      } else if (window.MediaRecorder.isTypeSupported("audio/ogg")) {
+        mimeType = "audio/ogg"
+      }
+
+      // Create a new MediaRecorder instance with appropriate options
+      const recorder = new MediaRecorder(stream, { mimeType })
+      audioRecorder.current = recorder
 
       // Event handler for when data is available
-      mediaRecorder.ondataavailable = (event) => {
+      recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
-          chunksRef.current.push(event.data)
+          audioChunks.current.push(event.data)
         }
       }
 
       // Event handler for when recording stops
-      mediaRecorder.onstop = async () => {
+      recorder.onstop = async () => {
         // Create a blob from the chunks
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" })
+        const mimeType = recorder.mimeType || "audio/webm"
+        const blob = new Blob(audioChunks.current, { type: mimeType })
         await handleStopRecording(blob)
       }
 
       // Start recording
-      mediaRecorder.start()
+      recorder.start()
       setIsRecording(true)
     } catch (error) {
       console.error("Error starting recording:", error)
@@ -107,9 +138,16 @@ export function TransactionPromptForm({
   }
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop()
+    if (audioRecorder.current && isRecording) {
+      audioRecorder.current.stop()
       setIsRecording(false)
+
+      // Stop all audio tracks
+      if (audioRecorder.current.stream) {
+        audioRecorder.current.stream
+          .getTracks()
+          .forEach((track) => track.stop())
+      }
     }
   }
 
@@ -186,13 +224,6 @@ export function TransactionPromptForm({
 
   // Event handler for when recording stops
   const handleStopRecording = async (blob: Blob) => {
-    // Stop all audio tracks if mediaRecorderRef is available
-    if (mediaRecorderRef.current && mediaRecorderRef.current.stream) {
-      mediaRecorderRef.current.stream
-        .getTracks()
-        .forEach((track) => track.stop())
-    }
-
     setLoading(true)
     try {
       // Transcribe the audio
