@@ -45,8 +45,32 @@ export class CategoriesService {
     const queryString = params.toString()
     if (queryString) url += `?${queryString}`
 
-    const response = await this.apiService.get<CategoriesResponse>(url)
-    return response.data.categories
+    try {
+      const response = await this.apiService.get<CategoriesResponse | Category[]>(url)
+      
+      // Verificar si la respuesta es un array o un objeto con la propiedad 'categories'
+      if (Array.isArray(response)) {
+        console.log(`Respuesta de findAll categories es un array con ${response.length} elementos`);
+        return response;
+      } else if (response && typeof response === 'object') {
+        // Si tiene la propiedad 'categories', devolver eso
+        if ('categories' in response) {
+          return (response as CategoriesResponse).categories;
+        }
+        
+        // Si es el data.categories (formato antiguo)
+        if ('data' in response && response.data && typeof response.data === 'object' && 'categories' in response.data) {
+          return (response.data as any).categories;
+        }
+      }
+      
+      // Si no podemos determinar el formato, devolver array vacío y loguear error
+      console.error('Formato de respuesta de categorías inesperado:', response);
+      return [];
+    } catch (error) {
+      console.error(`Error obteniendo categorías:`, error);
+      throw error;
+    }
   }
 
   /**
@@ -72,8 +96,32 @@ export class CategoriesService {
     let url = `/categories/user/${userId}`
     if (type) url += `?type=${type}`
 
-    const response = await this.apiService.get<CategoriesResponse>(url)
-    return response.data.categories
+    try {
+      const response = await this.apiService.get<CategoriesResponse | Category[]>(url)
+      
+      // Verificar si la respuesta es un array o un objeto con la propiedad 'categories'
+      if (Array.isArray(response)) {
+        console.log(`Respuesta de categorías para usuario ${userId} es un array`);
+        return response;
+      } else if (response && typeof response === 'object') {
+        // Si tiene la propiedad 'categories', devolver eso
+        if ('categories' in response) {
+          return (response as CategoriesResponse).categories;
+        }
+        
+        // Si parece ser un array directamente
+        if (Array.isArray(response)) {
+          return response;
+        }
+      }
+      
+      // Si no podemos determinar el formato, devolver array vacío y loguear error
+      console.error('Formato de respuesta de categorías inesperado:', response);
+      return [];
+    } catch (error) {
+      console.error(`Error obteniendo categorías para usuario ${userId}:`, error);
+      throw error;
+    }
   }
 
   /**
@@ -110,6 +158,54 @@ export class CategoriesService {
    */
   public async remove(id: string): Promise<void> {
     await this.apiService.delete(`/categories/${id}`)
+  }
+
+  /**
+   * Obtiene categorías directamente usando fetch para bypasear cualquier capa intermedia
+   * @returns Lista de categorías
+   */
+  public async findAllDirect(): Promise<Category[]> {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No hay token de autenticación disponible');
+    }
+    
+    try {
+      // Obtener la URL de la API de las variables de entorno de Next.js
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001';
+      
+      const response = await fetch(`${apiUrl}/categories`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error al obtener categorías: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Categorías obtenidas directamente:', data);
+      
+      // Verificar si la respuesta es un array o un objeto con la propiedad 'categories'
+      if (Array.isArray(data)) {
+        return data;
+      } else if (data && typeof data === 'object') {
+        // Si tiene la propiedad 'categories', devolver eso
+        if ('categories' in data && Array.isArray(data.categories)) {
+          console.log(`Procesando ${data.categories.length} categorías de la respuesta`);
+          return data.categories;
+        }
+      }
+      
+      console.error('Formato de respuesta inesperado:', data);
+      return [];
+    } catch (error) {
+      console.error('Error obteniendo categorías directamente:', error);
+      throw error;
+    }
   }
 }
 

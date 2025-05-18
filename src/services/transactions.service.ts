@@ -1,4 +1,5 @@
-import { ApiService } from "./api.service"
+import axios from "axios"
+import { authenticatedGet, authenticatedPost, authenticatedPatch, authenticatedDelete } from "../utils/api"
 import {
   Transaction,
   TransactionResponse,
@@ -8,25 +9,10 @@ import {
   QueryTransactionsDto,
   PaginatedTransactions,
   TotalsByPeriodDto,
+  TransactionSuggestion,
 } from "../types/transaction.types"
-import axios from "axios"
 
 export class TransactionsService {
-  private apiService: ApiService
-  private static instance: TransactionsService
-
-  private constructor() {
-    this.apiService = ApiService.getInstance()
-  }
-
-  // Singleton pattern to ensure only one instance
-  public static getInstance(): TransactionsService {
-    if (!TransactionsService.instance) {
-      TransactionsService.instance = new TransactionsService()
-    }
-    return TransactionsService.instance
-  }
-
   /**
    * Create a new transaction
    * @param createTransactionDto Transaction data to create
@@ -34,11 +20,12 @@ export class TransactionsService {
   public async create(
     createTransactionDto: CreateTransactionDto,
   ): Promise<Transaction> {
-    const response = await this.apiService.post<TransactionResponse>(
+    console.log("Enviando datos a la API:", createTransactionDto);
+    const response = await authenticatedPost<TransactionResponse>(
       "/transactions",
       createTransactionDto,
-    )
-    return response.data.transaction
+    );
+    return response.transaction;
   }
 
   /**
@@ -46,10 +33,10 @@ export class TransactionsService {
    * @param userId User ID
    */
   public async findAll(userId: string): Promise<Transaction[]> {
-    const response = await this.apiService.get<TransactionsResponse>(
+    const response = await authenticatedGet<TransactionsResponse>(
       `/transactions?userId=${userId}`,
-    )
-    return response.data.transactions
+    );
+    return response.transactions;
   }
 
   /**
@@ -59,19 +46,18 @@ export class TransactionsService {
   public async queryTransactions(
     queryParams: QueryTransactionsDto,
   ): Promise<PaginatedTransactions> {
-    const params = new URLSearchParams()
+    const params = new URLSearchParams();
 
     // Add all non-undefined params to the query string
     Object.entries(queryParams).forEach(([key, value]) => {
       if (value !== undefined) {
-        params.append(key, String(value))
+        params.append(key, String(value));
       }
-    })
+    });
 
-    const response = await this.apiService.get<PaginatedTransactions>(
+    return authenticatedGet<PaginatedTransactions>(
       `/transactions/query?${params.toString()}`,
-    )
-    return response.data
+    );
   }
 
   /**
@@ -83,10 +69,10 @@ export class TransactionsService {
     recurringId: string,
     userId: string,
   ): Promise<Transaction[]> {
-    const response = await this.apiService.get<TransactionsResponse>(
+    const response = await authenticatedGet<TransactionsResponse>(
       `/transactions/recurring/${recurringId}?userId=${userId}`,
-    )
-    return response.data.transactions
+    );
+    return response.transactions;
   }
 
   /**
@@ -95,10 +81,10 @@ export class TransactionsService {
    * @param userId User ID
    */
   public async findOne(id: string, userId: string): Promise<Transaction> {
-    const response = await this.apiService.get<TransactionResponse>(
+    const response = await authenticatedGet<TransactionResponse>(
       `/transactions/${id}?userId=${userId}`,
-    )
-    return response.data.transaction
+    );
+    return response.transaction;
   }
 
   /**
@@ -110,11 +96,11 @@ export class TransactionsService {
     id: string,
     updateTransactionDto: UpdateTransactionDto,
   ): Promise<Transaction> {
-    const response = await this.apiService.patch<TransactionResponse>(
+    const response = await authenticatedPatch<TransactionResponse>(
       `/transactions/${id}`,
       updateTransactionDto,
-    )
-    return response.data.transaction
+    );
+    return response.transaction;
   }
 
   /**
@@ -123,48 +109,50 @@ export class TransactionsService {
    * @param userId User ID
    */
   public async remove(id: string, userId: string): Promise<void> {
-    await this.apiService.delete(`/transactions/${id}?userId=${userId}`)
+    await authenticatedDelete<void>(`/transactions/${id}?userId=${userId}`);
   }
 
   /**
    * Create a transaction from a natural language prompt
+   * @param userId The user's ID
    * @param message The user's text prompt
-   * @param context Additional context data
    * @param image Optional image data
+   * @param token Authentication token
    */
   public async createFromPrompt(
+    userId: string,
     message: string,
-    context: string,
-    image?: string,
+    image?: string | null,
+    token?: string | null,
   ): Promise<TransactionResponse> {
     const response = await axios.post<TransactionResponse>(
       "/api/transactions",
-      { message, context, image },
-    )
-    return response.data
+      { userId, message, image: image || undefined, token: token || undefined },
+    );
+    return response.data;
   }
 
   /**
    * Transcribe audio to text using OpenAI
-   * @param audioBlob The audio blob to transcribe
+   * @param userId The user's ID
+   * @param audioBase64 The base64 encoded audio to transcribe
    */
-  public async transcribeAudio(audioBlob: Blob): Promise<string> {
-    // Create form data to send the audio file
-    const formData = new FormData()
-    formData.append("audio", audioBlob, "voice_recording.webm")
-
-    // Send the audio file to the transcription endpoint
+  public async transcribeAudio(
+    userId: string, 
+    audioBase64: string
+  ): Promise<{ text: string }> {
+    // Send the audio to the transcription endpoint
     const response = await axios.post<{ text: string }>(
       "/api/transcribe",
-      formData,
+      { userId, audioBase64 },
       {
         headers: {
-          "Content-Type": "multipart/form-data",
+          "Content-Type": "application/json",
         },
       },
-    )
+    );
 
-    return response.data.text
+    return response.data;
   }
 
   /**
@@ -174,49 +162,52 @@ export class TransactionsService {
   public async getTotalsByPeriod(
     params: TotalsByPeriodDto,
   ): Promise<Record<string, number>> {
-    const queryParams = new URLSearchParams()
+    const queryParams = new URLSearchParams();
 
     // Add all non-undefined params to the query string
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined) {
-        queryParams.append(key, String(value))
+        queryParams.append(key, String(value));
       }
-    })
+    });
 
-    const response = await this.apiService.get<Record<string, number>>(
-      `/transactions/totals?${queryParams.toString()}`,
-    )
-    return response.data
+    return authenticatedGet<Record<string, number>>(
+      `/transactions/totals?${queryParams.toString()}`
+    );
   }
 
   /**
    * Get financial summary for a user
    */
   public async getSummary(userId: string): Promise<{
-    balance: number
-    totalIncome: number
-    totalExpense: number
-    currency: string
+    balance: number;
+    totalIncome: number;
+    totalExpense: number;
+    currency: string;
   }> {
-    const response = await this.apiService.get<{
-      balance: number
-      totalIncome: number
-      totalExpense: number
-      currency: string
-    }>(`/transactions/summary?userId=${userId}`)
-    return response.data
+    return authenticatedGet<{
+      balance: number;
+      totalIncome: number;
+      totalExpense: number;
+      currency: string;
+    }>(`/transactions/summary?userId=${userId}`);
   }
 
   /**
    * Get recent transactions for a user (last 10)
    */
   public async getRecentTransactions(userId: string): Promise<Transaction[]> {
-    const response = await this.apiService.get<TransactionsResponse>(
-      `/transactions/recent?userId=${userId}`,
-    )
-    return response.data.transactions || response.data
+    const response = await authenticatedGet<TransactionsResponse | Transaction[]>(
+      `/transactions/recent?userId=${userId}`
+    );
+    
+    // Handle both response formats
+    if ('transactions' in response) {
+      return response.transactions;
+    }
+    return response;
   }
 }
 
 // Create a singleton instance of the TransactionsService
-export const transactionsService = TransactionsService.getInstance()
+export const transactionsService = new TransactionsService();

@@ -45,8 +45,32 @@ export class PaymentMethodsService {
     const queryString = params.toString()
     if (queryString) url += `?${queryString}`
 
-    const response = await this.apiService.get<PaymentMethodsResponse>(url)
-    return response.data.paymentMethods
+    try {
+      const response = await this.apiService.get<PaymentMethodsResponse | PaymentMethod[]>(url)
+      
+      // Verificar si la respuesta es un array o un objeto con la propiedad 'paymentMethods'
+      if (Array.isArray(response)) {
+        console.log(`Respuesta de findAll payment methods es un array con ${response.length} elementos`);
+        return response;
+      } else if (response && typeof response === 'object') {
+        // Si tiene la propiedad 'paymentMethods', devolver eso
+        if ('paymentMethods' in response) {
+          return (response as PaymentMethodsResponse).paymentMethods;
+        }
+        
+        // Si es el data.paymentMethods (formato antiguo)
+        if ('data' in response && response.data && typeof response.data === 'object' && 'paymentMethods' in response.data) {
+          return (response.data as any).paymentMethods;
+        }
+      }
+      
+      // Si no podemos determinar el formato, devolver array vacío y loguear error
+      console.error('Formato de respuesta de métodos de pago inesperado:', response);
+      return [];
+    } catch (error) {
+      console.error(`Error obteniendo métodos de pago:`, error);
+      throw error;
+    }
   }
 
   /**
@@ -72,8 +96,32 @@ export class PaymentMethodsService {
     let url = `/payment-methods/user/${userId}`
     if (type) url += `?type=${type}`
 
-    const response = await this.apiService.get<PaymentMethodsResponse>(url)
-    return response.data.paymentMethods
+    try {
+      const response = await this.apiService.get<PaymentMethodsResponse | PaymentMethod[]>(url)
+      
+      // Verificar si la respuesta es un array o un objeto con la propiedad 'paymentMethods'
+      if (Array.isArray(response)) {
+        console.log(`Respuesta de métodos de pago para usuario ${userId} es un array`);
+        return response;
+      } else if (response && typeof response === 'object') {
+        // Si tiene la propiedad 'paymentMethods', devolver eso
+        if ('paymentMethods' in response) {
+          return (response as PaymentMethodsResponse).paymentMethods;
+        }
+        
+        // Si parece ser un array directamente
+        if (Array.isArray(response)) {
+          return response;
+        }
+      }
+      
+      // Si no podemos determinar el formato, devolver array vacío y loguear error
+      console.error('Formato de respuesta de métodos de pago inesperado:', response);
+      return [];
+    } catch (error) {
+      console.error(`Error obteniendo métodos de pago para usuario ${userId}:`, error);
+      throw error;
+    }
   }
 
   /**
@@ -112,6 +160,54 @@ export class PaymentMethodsService {
    */
   public async remove(id: string): Promise<void> {
     await this.apiService.delete(`/payment-methods/${id}`)
+  }
+
+  /**
+   * Obtiene métodos de pago directamente usando fetch para bypasear cualquier capa intermedia
+   * @returns Lista de métodos de pago
+   */
+  public async findAllDirect(): Promise<PaymentMethod[]> {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No hay token de autenticación disponible');
+    }
+    
+    try {
+      // Obtener la URL de la API de las variables de entorno de Next.js
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001';
+      
+      const response = await fetch(`${apiUrl}/payment-methods`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error al obtener métodos de pago: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Métodos de pago obtenidos directamente:', data);
+      
+      // Verificar si la respuesta es un array o un objeto con la propiedad 'paymentMethods'
+      if (Array.isArray(data)) {
+        return data;
+      } else if (data && typeof data === 'object') {
+        // Si tiene la propiedad 'paymentMethods', devolver eso
+        if ('paymentMethods' in data && Array.isArray(data.paymentMethods)) {
+          console.log(`Procesando ${data.paymentMethods.length} métodos de pago de la respuesta`);
+          return data.paymentMethods;
+        }
+      }
+      
+      console.error('Formato de respuesta inesperado:', data);
+      return [];
+    } catch (error) {
+      console.error('Error obteniendo métodos de pago directamente:', error);
+      throw error;
+    }
   }
 }
 

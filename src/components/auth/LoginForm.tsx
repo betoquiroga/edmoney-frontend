@@ -3,30 +3,26 @@
 import React, { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 
 import { loginSchema, LoginFormValues } from "@/lib/validations/auth.schema"
-import { authService } from "@/services/auth.service"
 import { LoginDto } from "@/types/auth.types"
+import { useAuth } from "@/context/AuthContext"
 
 import Input from "../ui/Input"
 import { Button } from "../ui/Button"
 
-interface ApiError {
-  message: string
-  status?: number
-}
-
 export default function LoginForm() {
   const router = useRouter()
   const [authError, setAuthError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const { login } = useAuth()
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -35,21 +31,25 @@ export default function LoginForm() {
     },
   })
 
-  const loginMutation = useMutation({
-    mutationFn: (data: LoginDto) => authService.login(data),
-    onSuccess: () => {
-      router.push("/dashboard")
-    },
-    onError: (error: ApiError) => {
-      setAuthError(
-        error.message || "Error al iniciar sesión. Verifica tus credenciales.",
-      )
-    },
-  })
-
   const onSubmit = async (data: LoginFormValues) => {
     setAuthError(null)
-    loginMutation.mutate(data)
+    setIsLoading(true)
+    
+    try {
+      const success = await login(data.email, data.password)
+      
+      if (success) {
+        console.log('Login exitoso, redirigiendo a dashboard')
+        router.push("/dashboard")
+      } else {
+        setAuthError("Error al iniciar sesión. Verifica tus credenciales.")
+      }
+    } catch (error: any) {
+      console.error('Error en login:', error)
+      setAuthError(error.message || "Error al iniciar sesión. Verifica tus credenciales.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -76,10 +76,8 @@ export default function LoginForm() {
         placeholder="******"
       />
 
-      <Button variant="primary">
-        {isSubmitting || loginMutation.isPending
-          ? "Iniciando sesión..."
-          : "Iniciar Sesión"}
+      <Button variant="primary" disabled={isLoading}>
+        {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
       </Button>
 
       <div className="text-center mt-4">

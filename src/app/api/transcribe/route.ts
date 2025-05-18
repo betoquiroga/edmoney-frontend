@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server"
 import OpenAI from "openai"
+import { createReadStream } from "fs"
+import { writeFile } from "fs/promises"
+import { tmpdir } from "os"
+import path from "path"
 
 // Initialize OpenAI client with API key
 const openai = new OpenAI({
@@ -8,39 +12,60 @@ const openai = new OpenAI({
 
 export async function POST(request: Request) {
   try {
-    // Get the form data from the request
-    const formData = await request.formData()
+    // Get the JSON from the request
+    const { userId, audioBase64 } = await request.json()
 
-    // Get the audio file from the form data
-    const audioFile = formData.get("audio") as File
-
-    if (!audioFile) {
+    if (!userId) {
       return NextResponse.json(
-        { message: "No audio file provided" },
+        { message: "No se proporcionó ID de usuario" },
         { status: 400 },
       )
     }
 
-    // Convert the file to a buffer to use with OpenAI
-    const arrayBuffer = await audioFile.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+    if (!audioBase64) {
+      return NextResponse.json(
+        { message: "No se proporcionó audio" },
+        { status: 400 },
+      )
+    }
+    
+    try {
+      // Convertir base64 a un buffer
+      const buffer = Buffer.from(audioBase64, 'base64');
+      
+      // Guardar temporalmente el archivo en el sistema
+      const tempFilePath = path.join(tmpdir(), `audio-${userId}-${Date.now()}.webm`);
+      await writeFile(tempFilePath, buffer);
+      
+      console.log(`Archivo temporal guardado en: ${tempFilePath}`);
+      
+      // Crear un stream para el archivo
+      const audioFileStream = createReadStream(tempFilePath);
+      
+      console.log(`Procesando transcripción para usuario ${userId}, tamaño del archivo: ${buffer.length} bytes`);
 
-    // Create a file object that OpenAI can use
-    const file = new File([buffer], audioFile.name, { type: audioFile.type })
+      // Llamar a la API de OpenAI para la transcripción
+      const transcription = await openai.audio.transcriptions.create({
+        file: audioFileStream,
+        model: "whisper-1", // Usando el modelo Whisper para transcripción de audio
+      });
 
-    // Call OpenAI API for transcription
-    const transcription = await openai.audio.transcriptions.create({
-      file: file,
-      model: "whisper-1", // Using Whisper model for audio transcription
-    })
+      console.log(`Transcripción completa: "${transcription.text}"`);
 
-    // Return the transcribed text
-    return NextResponse.json({ text: transcription.text })
+      // Devolver el texto transcrito
+      return NextResponse.json({ text: transcription.text });
+    } catch (error) {
+      console.error("Error en el procesamiento del audio:", error);
+      return NextResponse.json(
+        { message: `Error procesando el audio: ${error instanceof Error ? error.message : 'Error desconocido'}` },
+        { status: 500 },
+      );
+    }
   } catch (error) {
-    console.error("Error transcribing audio:", error)
+    console.error("Error en la API de transcripción:", error);
     return NextResponse.json(
-      { message: "Error al transcribir el audio" },
+      { message: `Error al transcribir el audio: ${error instanceof Error ? error.message : 'Error desconocido'}` },
       { status: 500 },
-    )
+    );
   }
 }

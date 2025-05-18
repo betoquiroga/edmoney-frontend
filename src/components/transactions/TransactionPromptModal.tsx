@@ -30,6 +30,14 @@ export function TransactionPromptModal({
     setSaveResult(null)
 
     try {
+      // Verificar que todos los campos obligatorios estén presentes
+      const requiredFields = ['user_id', 'category_id', 'payment_method_id', 'input_method_id', 'transaction_date', 'type', 'amount'];
+      const missingFields = requiredFields.filter(field => !response.transaction?.[field as keyof typeof response.transaction]);
+      
+      if (missingFields.length > 0) {
+        throw new Error(`Falta información obligatoria: ${missingFields.join(', ')}`);
+      }
+
       // Map the transaction data to the format expected by the API
       /* eslint-disable camelcase */
       const transactionDto: CreateTransactionDto = {
@@ -47,6 +55,8 @@ export function TransactionPromptModal({
       }
       /* eslint-enable camelcase */
 
+      console.log("Guardando transacción con datos:", transactionDto);
+
       // Call the API to save the transaction
       await transactionsService.create(transactionDto)
 
@@ -58,7 +68,9 @@ export function TransactionPromptModal({
       console.error("Error saving transaction:", error)
       setSaveResult({
         status: "error",
-        message: "Error al guardar la transacción",
+        message: error instanceof Error 
+          ? `Error al guardar la transacción: ${error.message}`
+          : "Error al guardar la transacción",
       })
     } finally {
       setIsSaving(false)

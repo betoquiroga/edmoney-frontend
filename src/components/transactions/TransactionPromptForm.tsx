@@ -3,8 +3,10 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { transactionsService } from "@/services/transactions.service"
 import { TransactionPromptResponse } from "@/types/transaction-prompt.types"
-import { useState, useRef, ChangeEvent, DragEvent, useEffect } from "react"
+import { useState, useRef, ChangeEvent, DragEvent, useEffect, useCallback } from "react"
 import { useUser } from "../layout/DashboardLayout"
+import { debounce } from "lodash"
+import { useMutation } from "@tanstack/react-query"
 
 const promptSchema = z.object({
   message: z.string().min(5, "El mensaje debe tener al menos 5 caracteres"),
@@ -26,6 +28,9 @@ const isIOS = () => {
   )
 }
 
+// Añadir la definición de textAreaClasses
+const textAreaClasses = "w-full rounded-md border border-gray-300 dark:border-gray-700 shadow-sm px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+
 export function TransactionPromptForm({
   onResponse,
   setLoading,
@@ -37,12 +42,36 @@ export function TransactionPromptForm({
   const [recordingTime, setRecordingTime] = useState(0)
   const [isAudioContextReady, setIsAudioContextReady] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { user } = useUser()
   const audioRecorder = useRef<MediaRecorder | null>(null)
   const audioChunks = useRef<Blob[]>([])
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const isIOSDevice = useRef<boolean>(false)
+  
+  // Inicializar estados con valores almacenados localmente si existen
+  const [messageValue, setMessageValue] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('transcribedText') || "";
+    }
+    return "";
+  });
+  
+  const messageValueRef = useRef<string>("")
+  const [transcribedText, setTranscribedText] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('transcribedText') || "";
+    }
+    return "";
+  });
+  
+  // Guardar el valor transcrito en localStorage cuando cambie
+  useEffect(() => {
+    if (transcribedText && typeof window !== 'undefined') {
+      localStorage.setItem('transcribedText', transcribedText);
+    }
+  }, [transcribedText]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -146,6 +175,7 @@ export function TransactionPromptForm({
     register,
     handleSubmit,
     setValue,
+    getValues,
     formState: { errors },
   } = useForm<PromptFormValues>({
     resolver: zodResolver(promptSchema),
@@ -153,6 +183,22 @@ export function TransactionPromptForm({
       message: "",
     },
   })
+
+  // Registrar el textarea y sincronizar el ref
+  const { ref, ...registerProps } = register("message");
+  
+  // Guardar el valor en el ref cada vez que cambie messageValue
+  useEffect(() => {
+    messageValueRef.current = messageValue;
+    
+    // Sincronizar el valor con el textarea si existe
+    if (textareaRef.current) {
+      textareaRef.current.value = messageValue;
+    }
+    
+    // También actualizar el valor en el formulario
+    setValue("message", messageValue);
+  }, [messageValue, setValue]);
 
   // Effect to handle the recording timer
   useEffect(() => {
@@ -234,54 +280,32 @@ export function TransactionPromptForm({
         }
       }
 
-      // Create a new MediaRecorder instance with appropriate options
-      // For iOS, use a lower bitrate which can help with compatibility
-      const options: MediaRecorderOptions = {
-        mimeType,
-        audioBitsPerSecond: isIOSDevice.current ? 96000 : undefined,
-      }
-
-      const recorder = new MediaRecorder(stream, options)
+      // Create and set up the recorder
+      const recorder = new MediaRecorder(stream, { mimeType })
       audioRecorder.current = recorder
 
-      // Event handler for when data is available
-      recorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) {
-          audioChunks.current.push(event.data)
+      // Set up event handlers
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          audioChunks.current.push(e.data)
         }
       }
 
-      // Event handler for when recording stops
-      recorder.onstop = async () => {
-        // Create a blob from the chunks
-        const mimeType = recorder.mimeType || "audio/webm"
+      recorder.onstop = () => {
+        // Create a blob from all chunks
         const blob = new Blob(audioChunks.current, { type: mimeType })
+        handleStopRecording(blob)
 
-        // Check if blob is valid (has size greater than header-only)
-        if (blob.size <= 44) {
-          console.error(
-            "Error: Recording produced an empty audio file (only headers)",
-          )
-          // Try again on iOS
-          if (isIOSDevice.current) {
-            alert("Error recording audio. Please try again.")
-            return
-          }
-        }
-
-        await handleStopRecording(blob)
+        // Stop all tracks in the stream
+        stream.getTracks().forEach((track) => track.stop())
       }
 
       // Start recording
       recorder.start()
       setIsRecording(true)
-    } catch (error) {
-      console.error("Error starting recording:", error)
-      if (isIOSDevice.current) {
-        alert(
-          "Error accessing microphone. Please ensure permissions are granted and try again.",
-        )
-      }
+    } catch (err) {
+      console.error("Error starting recording:", err)
+      alert("No se pudo acceder al micrófono. Verifica los permisos.")
     }
   }
 
@@ -289,32 +313,30 @@ export function TransactionPromptForm({
     if (audioRecorder.current && isRecording) {
       audioRecorder.current.stop()
       setIsRecording(false)
-
-      // Stop all audio tracks
-      if (audioRecorder.current.stream) {
-        audioRecorder.current.stream
-          .getTracks()
-          .forEach((track) => track.stop())
-      }
     }
   }
 
   const handleFileChange = (file: File) => {
     if (file) {
-      setImageName(file.name)
+      const validTypes = ["image/jpeg", "image/png", "image/gif"]
+      if (!validTypes.includes(file.type)) {
+        alert("Por favor, selecciona una imagen válida (JPEG, PNG o GIF)")
+        return
+      }
+
       const reader = new FileReader()
-      reader.onload = () => {
-        const base64 = reader.result as string
+      reader.onload = (e) => {
+        const base64 = e.target?.result as string
         setImageBase64(base64)
+        setImageName(file.name)
       }
       reader.readAsDataURL(file)
     }
   }
 
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handleFileChange(e.target.files[0])
-    }
+    const file = e.target.files?.[0]
+    if (file) handleFileChange(file)
   }
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
@@ -330,10 +352,8 @@ export function TransactionPromptForm({
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     setIsDragging(false)
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileChange(e.dataTransfer.files[0])
-    }
+    const file = e.dataTransfer.files?.[0]
+    if (file) handleFileChange(file)
   }
 
   const handleBrowseClick = () => {
@@ -348,211 +368,397 @@ export function TransactionPromptForm({
     }
   }
 
-  const contextDefault = `<contexto> user_id: ${user?.id} Categorías disponibles: ID | name f47ac10b-58cc-4372-a567-0e02b2c3d479 | Alimentación 38c4e644-6c23-4b85-9cb4-93e0b91bab92 | Transporte 1a5f9851-53e1-4f0c-b8ad-76c6b8e4ff37 | Salario c71f23c1-4a09-4b8a-b866-4210b13ee7d8Entretenimiento db3eb5d3-86a6-4d1c-9ca6-6e98baa3d1e6 | Transferencia entre cuentas Payment methods disponibles: id | name eea04a3a-ab7d-46c4-b90e-4aa8f6c4284d | Cash ba384815-d670-47ea-bee1-f919995180ce | Credit Card 780e54f4-3a17-4de0-8645-425681bcd3f5 | Debit Card 51284ad5-0adc-473e-aa64-cc6dd78c03bd | Bank Transfer 30dd8a7f-cc49-490a-8b0a-855fb2d4451d | PayPal (Si el usuario no te dice el método, usa siempre Cash) input_method_id: 5df021e9-7955-49ba-9488-de9a21bc5eca Si el mensaje del usuario o la imagen adjunta no tiene fecha de transacción, usa la fecha actual: transaction_date: ${new Date().toISOString()} </contexto>`
+  // Crear la mutación para procesar la transacción con IA
+  const createTransactionFromPromptMutation = useMutation({
+    mutationFn: async ({
+      message,
+      imageBase64,
+    }: {
+      message: string
+      imageBase64: string | null
+    }) => {
+      if (!user?.id) throw new Error("User not authenticated")
+      
+      // Obtener el token de autenticación
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error("No hay token de autenticación");
+      
+      console.log("Enviando prompt a la API con userId:", user.id);
+      return transactionsService.createFromPrompt(user.id, message, imageBase64, token);
+    },
+    onSuccess: (data) => {
+      // Convert TransactionResponse to TransactionPromptResponse
+      onResponse({
+        transaction: data.transaction,
+        message: data.message || "Transacción procesada con éxito"
+      })
+    },
+    onError: (error) => {
+      console.error("Error en createFromPrompt:", error)
+      onResponse({
+        message: `Error: ${error instanceof Error ? error.message : "Error desconocido"}`
+      })
+    }
+  })
+
+  const handleMessageChange = (value: string) => {
+    console.log("Actualizando valor a:", value);
+    setMessageValue(value);
+    messageValueRef.current = value;
+    
+    // Si el usuario modifica manualmente, también actualizar el valor transcrito
+    // para evitar sobrescrituras
+    setTranscribedText(value);
+  }
+
+  // Función para actualizar manualmente el textarea
+  const updateTextarea = (text: string) => {
+    console.log("Actualizando textarea manualmente con:", text);
+    
+    // Actualizar estados
+    setMessageValue(text);
+    messageValueRef.current = text;
+    
+    // Actualizar formulario
+    setValue("message", text);
+    
+    // Actualizar DOM si el ref está disponible
+    if (textareaRef.current) {
+      textareaRef.current.value = text;
+    }
+  }
+
+  const handleStopRecording = async (blob: Blob) => {
+    try {
+      if (!user?.id) throw new Error("User not authenticated")
+
+      // Start loading state
+      setLoading(true)
+
+      // Convert blob to base64
+      const reader = new FileReader()
+      reader.readAsDataURL(blob)
+      reader.onloadend = async () => {
+        const base64data = reader.result as string
+        // Get only the base64 part, removing data:audio/webm;base64,
+        const base64Audio = base64data.split(",")[1]
+
+        try {
+          console.log("Enviando audio para transcripción...");
+          // Send to backend for transcription
+          const transcription = await transactionsService.transcribeAudio(
+            user.id,
+            base64Audio
+          )
+
+          console.log("Respuesta de transcripción:", transcription);
+          
+          if (transcription && transcription.text) {
+            const newTranscribedText = transcription.text;
+            console.log("Texto transcrito:", newTranscribedText);
+            
+            // Guardar en localStorage primero para asegurar persistencia
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('transcribedText', newTranscribedText);
+              console.log("Texto guardado en localStorage");
+            }
+            
+            // Establecer el valor en el textarea y el estado
+            setMessageValue(newTranscribedText);
+            setValue("message", newTranscribedText);
+            
+            // Desactivar el indicador de carga
+            setLoading(false);
+            
+            // Dar tiempo para que la UI se actualice
+            setTimeout(() => {
+              // Si hay un elemento textarea, asegurar que tenga el valor correcto
+              if (textareaRef.current) {
+                textareaRef.current.value = newTranscribedText;
+                console.log("Valor actualizado en textarea");
+              }
+            }, 50);
+          } else {
+            console.error("No se obtuvo texto de la transcripción:", transcription);
+            alert("No se pudo transcribir el audio. Inténtalo de nuevo.")
+            setLoading(false);
+          }
+        } catch (error) {
+          console.error("Error transcribing audio:", error)
+          alert("Error al procesar el audio. Inténtalo de nuevo.")
+          setLoading(false);
+        }
+      }
+    } catch (error) {
+      console.error("Error processing audio:", error)
+      setLoading(false)
+    }
+  }
 
   const onSubmit = async (data: PromptFormValues) => {
+    if (!user?.id) {
+      alert("Debes iniciar sesión para usar esta función")
+      return
+    }
+
+    // Usar el valor del ref como respaldo, o localStorage si todo falla
+    const savedText = typeof window !== 'undefined' ? localStorage.getItem('transcribedText') : null;
+    const finalMessage = data.message || messageValueRef.current || messageValue || transcribedText || savedText || "";
+
+    console.log("Enviando datos al submit:", finalMessage);
+
     try {
       setLoading(true)
-      const response = await transactionsService.createFromPrompt(
-        data.message,
-        contextDefault,
-        imageBase64 || undefined,
-      )
-      onResponse({
-        transaction: response.transaction,
-        message: response.message || "Transacción procesada",
+      await createTransactionFromPromptMutation.mutateAsync({
+        message: finalMessage,
+        imageBase64,
       })
+      
+      // Solo resetear después de una operación exitosa
+      setValue("message", "")
+      setImageBase64(null)
+      setImageName(null)
+      setMessageValue("")
+      messageValueRef.current = "";
+      setTranscribedText(""); 
+      
+      // Limpiar localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('transcribedText');
+      }
     } catch (error) {
-      console.error("Error creating transaction from prompt:", error)
-      onResponse({ message: "Error al procesar la transacción" })
+      console.error("Error creating transaction:", error)
+      alert("Error al procesar la solicitud. Inténtalo de nuevo.")
     } finally {
       setLoading(false)
     }
   }
 
-  // Event handler for when recording stops
-  const handleStopRecording = async (blob: Blob) => {
-    setLoading(true)
-    try {
-      // Transcribe the audio
-      const text = await transactionsService.transcribeAudio(blob)
-
-      // Set the transcribed text to the message field
-      setValue("message", text, { shouldValidate: true })
-
-      // Create a transaction using the transcribed text
-      const response = await transactionsService.createFromPrompt(
-        text,
-        contextDefault,
-        undefined,
-      )
-
-      // Process the response
-      onResponse({
-        transaction: response.transaction,
-        message: response.message || "Transacción procesada desde audio",
-      })
-    } catch (error) {
-      console.error("Error transcribing audio or creating transaction:", error)
-      onResponse({ message: "Error al procesar la transacción de audio" })
-    } finally {
-      setLoading(false)
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRecorder.current && isRecording) {
+        audioRecorder.current.stop()
+      }
     }
-  }
+  }, [isRecording])
+
+  // Sincronizar el messageValue con transcribedText para evitar sobrescrituras
+  useEffect(() => {
+    // Solo actualizar messageValue desde transcribedText si transcribedText tiene valor
+    // y messageValue no lo tiene (o ha sido limpiado)
+    if (transcribedText && (!messageValue || messageValue === "")) {
+      console.log("Restaurando valor transcrito:", transcribedText);
+      setMessageValue(transcribedText);
+      setValue("message", transcribedText);
+      
+      // Actualizar directamente el textarea si está disponible
+      if (textareaRef.current) {
+        textareaRef.current.value = transcribedText;
+        // Disparar un evento para que React detecte el cambio
+        const event = new Event('input', { bubbles: true });
+        textareaRef.current.dispatchEvent(event);
+      }
+    }
+  }, [messageValue, transcribedText, setValue]);
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="space-y-4 dark:text-gray-200"
-    >
-      <div>
-        <div className="mt-4">
+    <div className="w-full">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="w-full relative">
+          <textarea
+            id="message-textarea"
+            {...registerProps}
+            ref={(e) => {
+              ref(e);
+              textareaRef.current = e;
+              
+              // Si hay texto almacenado, aplicarlo después del montaje
+              if (e && typeof window !== 'undefined') {
+                const savedText = localStorage.getItem('transcribedText');
+                if (savedText && !e.value) {
+                  e.value = savedText;
+                  
+                  // Actualizar estados
+                  setMessageValue(savedText);
+                  setValue("message", savedText);
+                  
+                  // Disparar eventos
+                  const event = new Event('input', { bubbles: true });
+                  e.dispatchEvent(event);
+                }
+              }
+            }}
+            placeholder="Describe tu transacción... (ej: 'Pagué $50 de café en efectivo ayer')"
+            rows={3}
+            className={`${textAreaClasses} ${
+              errors.message ? "border-red-500" : ""
+            }`}
+            value={messageValue}
+            onChange={(e) => handleMessageChange(e.target.value)}
+          />
+          {/* Indicador para mostrar el texto transcrito y/o texto en localStorage */}
+          <div id="transcription-display" className="text-xs text-gray-400 mt-1">
+            Texto actual: <span className="font-medium">{messageValue || "(vacío)"}</span>
+            {!messageValue && typeof window !== 'undefined' && localStorage.getItem('transcribedText') && (
+              <button 
+                type="button" 
+                className="ml-2 text-blue-500 hover:text-blue-600"
+                onClick={() => {
+                  const savedText = localStorage.getItem('transcribedText') || "";
+                  
+                  // Restaurar desde localStorage
+                  setMessageValue(savedText);
+                  setValue("message", savedText);
+                  
+                  // Actualizar el textarea 
+                  if (textareaRef.current) {
+                    textareaRef.current.value = savedText;
+                    textareaRef.current.focus();
+                    
+                    // Disparar eventos
+                    const event = new Event('input', { bubbles: true });
+                    textareaRef.current.dispatchEvent(event);
+                  }
+                }}
+              >
+                (Recuperar transcripción guardada)
+              </button>
+            )}
+          </div>
+          {errors.message && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.message.message}
+            </p>
+          )}
+        </div>
+
+        {/* Image Preview */}
+        {imageBase64 && (
+          <div className="relative mt-2 inline-block">
+            <img
+              src={imageBase64}
+              alt="Preview"
+              className="h-24 w-auto rounded-md object-cover"
+            />
+            <button
+              type="button"
+              onClick={removeImage}
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+              aria-label="Remove image"
+            >
+              ×
+            </button>
+            {imageName && (
+              <p className="text-xs text-gray-500 mt-1 truncate max-w-xs">
+                {imageName}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* File Drop Area */}
+        {!imageBase64 && (
           <div
+            className={`border-2 border-dashed ${
+              isDragging
+                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                : "border-gray-300 dark:border-gray-700"
+            } rounded-md p-4 text-center cursor-pointer transition-colors`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={handleBrowseClick}
-            className={`border-2 border-dashed rounded-md px-6 py-12 lg:py-28 text-center cursor-pointer transition mb-12 ${
-              isDragging
-                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                : "border-gray-300/20 dark:border-gray-600/30 hover:border-blue-400 dark:hover:border-blue-500"
-            }`}
           >
             <input
               type="file"
               ref={fileInputRef}
               onChange={handleFileSelect}
-              accept="image/jpeg,image/png,image/gif"
               className="hidden"
+              accept="image/jpeg,image/png,image/gif"
             />
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Arrastra una imagen de la factura o{" "}
+              <span className="text-blue-500">selecciona un archivo</span>
+            </p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              Soporta: JPG, PNG, GIF
+            </p>
+          </div>
+        )}
 
-            {imageBase64 ? (
-              <div className="space-y-2">
-                <div className="flex items-center justify-center">
-                  <img
-                    src={imageBase64}
-                    alt="Vista previa"
-                    className="max-h-40 max-w-full object-contain dark:border dark:border-gray-700 dark:rounded"
-                  />
-                </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                  {imageName}
-                </p>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    removeImage()
-                  }}
-                  className="inline-flex items-center px-3 py-1 text-xs font-medium text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900/30 rounded-md hover:bg-red-200 dark:hover:bg-red-800/50"
-                >
-                  Remover imagen
-                </button>
-              </div>
+        {/* Audio Recording Button */}
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-2">
+            {isRecording ? (
+              <button
+                type="button"
+                onClick={stopRecording}
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md flex items-center transition-colors"
+              >
+                <span className="inline-block w-3 h-3 rounded-full bg-white animate-pulse mr-2"></span>
+                <span>{formatTime(recordingTime)}</span>
+              </button>
             ) : (
-              <div>
+              <button
+                type="button"
+                onClick={prepareRecording}
+                className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md flex items-center transition-colors"
+              >
                 <svg
-                  className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
                   />
                 </svg>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  {isDragging
-                    ? "Suelta la imagen aquí..."
-                    : "Arrastra y suelta una imagen, o haz clic para seleccionar"}
-                </p>
-                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                  PNG, JPG, GIF
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center mb-4">
-          <label
-            htmlFor="message"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-          >
-            Describe tu transacción
-          </label>
-          <div className="ml-auto">
-            {isRecording ? (
-              <div className="flex items-center">
-                <span className="text-red-500 dark:text-red-400 text-sm mr-2 animate-pulse">
-                  Grabando {formatTime(recordingTime)}
-                </span>
-                <button
-                  type="button"
-                  onClick={stopRecording}
-                  className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={prepareRecording}
-                className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+                Dictar
               </button>
             )}
           </div>
-        </div>
-        <textarea
-          id="message"
-          rows={3}
-          className="w-full rounded-md border border-gray-300 dark:border-gray-700 shadow-sm px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-          placeholder="Ej. Compré un café por $5.50 en la cafetería"
-          {...register("message")}
-        />
-        {errors.message && (
-          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-            {errors.message.message}
-          </p>
-        )}
-      </div>
 
-      <div className="flex justify-end">
-        <button
-          type="submit"
-          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
-        >
-          Procesar transacción
-        </button>
-      </div>
-    </form>
+          <button
+            type="submit"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition-colors"
+            disabled={createTransactionFromPromptMutation.isPending}
+          >
+            {createTransactionFromPromptMutation.isPending ? (
+              <span className="flex items-center">
+                <svg
+                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Procesando...
+              </span>
+            ) : (
+              "Crear transacción"
+            )}
+          </button>
+        </div>
+      </form>
+    </div>
   )
 }
