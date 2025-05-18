@@ -7,6 +7,8 @@ interface ButtonProps {
   variant?: "primary" | "secondary" | "outline"
   className?: string
   onClick?: () => void
+  disabled?: boolean
+  type?: "button" | "submit" | "reset"
 }
 
 export function Button({
@@ -15,6 +17,8 @@ export function Button({
   variant = "primary",
   className = "",
   onClick,
+  disabled = false,
+  type = "submit",
 }: ButtonProps) {
   const baseClasses =
     "px-4 py-2 rounded-md font-medium transition-transform hover:-translate-y-1"
@@ -28,9 +32,13 @@ export function Button({
       "border border-white text-white hover:bg-white/10 dark:hover:bg-white/20",
   }
 
-  const classes = `${baseClasses} ${variantClasses[variant]} ${className}`
+  const disabledClasses = disabled
+    ? "opacity-60 cursor-not-allowed hover:translate-y-0"
+    : ""
 
-  if (href) {
+  const classes = `${baseClasses} ${variantClasses[variant]} ${disabledClasses} ${className}`
+
+  if (href && !disabled) {
     return (
       <Link href={href} className={classes}>
         {children}
@@ -39,7 +47,12 @@ export function Button({
   }
 
   return (
-    <button className={classes} onClick={onClick}>
+    <button
+      className={classes}
+      onClick={onClick}
+      disabled={disabled}
+      type={type}
+    >
       {children}
     </button>
   )
