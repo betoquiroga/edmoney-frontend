@@ -3,6 +3,7 @@ import { AddTransactionFAB } from "../../ui/AddTransactionFAB"
 import { createContext, useContext, useEffect, useState } from "react"
 import { usersService } from "../../../services/users.service"
 import { User } from "../../../types/user.types"
+import { ThemeProvider } from "@/context/ThemeContext"
 
 interface UserContextType {
   user: User | null
@@ -40,13 +41,15 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   return (
     <UserContext.Provider value={{ user, isLoading }}>
-      <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
-        <Sidebar />
-        <div className="flex-grow overflow-auto dark:bg-gray-900">
-          <main className="p-6">{children}</main>
-          <AddTransactionFAB />
+      <ThemeProvider>
+        <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+          <Sidebar />
+          <div className="flex-grow overflow-auto dark:bg-gray-900">
+            <main className="p-6">{children}</main>
+            <AddTransactionFAB />
+          </div>
         </div>
-      </div>
+      </ThemeProvider>
     </UserContext.Provider>
   )
 }
