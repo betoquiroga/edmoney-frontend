@@ -30,7 +30,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 dark:border-gray-700 mt-8 pt-8 text-gray-400 text-sm">
+        <div className="border-t border-gray-800 dark:border-gray-700 mt-8 pt-8 text-gray-400 text-sm text-center">
           <p>
             © {new Date().getFullYear()} EDmoney. Todos los derechos
             reservados.
