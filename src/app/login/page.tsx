@@ -1,22 +1,31 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 import Card from "@/components/ui/Card"
 import LoginForm from "@/components/auth/LoginForm"
-import { authService } from "@/services/auth.service"
 import { Logo } from "@/components/ui/Logo"
+import { useAuth } from "@/context/AuthContext"
 
 export default function LoginPage() {
   const router = useRouter()
+  const { isAuthenticated, isLoading } = useAuth()
+  const [authChecked, setAuthChecked] = useState(false)
 
-  // Redirect if already authenticated
+  // Verificar autenticación solo una vez al cargar la página
   useEffect(() => {
-    if (authService.isAuthenticated()) {
-      router.push("/dashboard")
+    // Solo ejecutar si no hemos verificado todavía
+    if (!authChecked && !isLoading) {
+      setAuthChecked(true)
+      
+      // Si ya está autenticado, redirigir al dashboard
+      if (isAuthenticated) {
+        console.log('Usuario ya autenticado, redirigiendo a dashboard')
+        router.push("/dashboard")
+      }
     }
-  }, [router])
+  }, [isAuthenticated, isLoading, router, authChecked])
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">

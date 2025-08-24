@@ -5,8 +5,10 @@ export class ApiService {
   private static instance: ApiService
 
   private constructor() {
+    console.log(`API URL: ${process.env.NEXT_PUBLIC_API_URL || 'undefined'}`);
+    
     this.api = axios.create({
-      baseURL: process.env.NEXT_PUBLIC_API_URL,
+      baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001',
       headers: {
         "Content-Type": "application/json",
       },
@@ -15,6 +17,8 @@ export class ApiService {
     // Request interceptor
     this.api.interceptors.request.use(
       (config) => {
+        console.log(`Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+        
         // Get token from localStorage if it exists
         const token =
           typeof window !== "undefined" ? localStorage.getItem("token") : null
@@ -26,21 +30,29 @@ export class ApiService {
 
         return config
       },
-      (error) => Promise.reject(error),
+      (error) => {
+        console.error("Request error:", error);
+        return Promise.reject(error);
+      },
     )
 
     // Response interceptor
     this.api.interceptors.response.use(
-      (response) => response,
+      (response) => {
+        console.log(`Response from ${response.config.url}: Status ${response.status}`);
+        return response;
+      },
       (error) => {
         // Handle specific error status codes
         if (error.response) {
-          const { status } = error.response
+          const { status, data } = error.response
+          console.error(`API Error (${status}):`, data);
 
           // Handle 401 Unauthorized
           if (status === 401) {
-            // Clear token and redirect to login
-            if (typeof window !== "undefined") {
+            console.error("401 Unauthorized:", data);
+            // Clear token and redirect to login only if not already on login page
+            if (typeof window !== "undefined" && !window.location.pathname.includes('/login')) {
               localStorage.removeItem("token")
               // Redirect to login page
               window.location.href = "/login"
@@ -49,18 +61,20 @@ export class ApiService {
 
           // Handle 403 Forbidden
           if (status === 403) {
-            console.error("Permission denied")
+            console.error("Permission denied:", data)
           }
 
           // Handle 404 Not Found
           if (status === 404) {
-            console.error("Resource not found")
+            console.error("Resource not found:", data)
           }
 
           // Handle 500 Server Error
           if (status >= 500) {
-            console.error("Server error occurred")
+            console.error("Server error occurred:", data)
           }
+        } else {
+          console.error("Network or other error:", error.message);
         }
 
         return Promise.reject(error)

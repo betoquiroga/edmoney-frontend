@@ -92,3 +92,14 @@ export interface TotalsByPeriodDto {
   startDate: string
   endDate: string
 }
+
+/**
+ * Transaction suggestion type
+ */
+export interface TransactionSuggestion {
+  description: string;
+  category_id?: string;
+  amount?: number;
+  type?: string;
+  confidence: number;
+}
